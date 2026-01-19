@@ -131,6 +131,7 @@ class ProjectGenerator:
         led_enum_name = pins[0]["enum_name"] if pins else "APP_PIN_LED"
         openocd_speed = board.openocd.speed_khz or pack.openocd.speed_khz
         openocd_transport = board.openocd.transport or pack.openocd.transport
+        openocd_transport = ProjectGenerator._normalize_transport(openocd_transport)
         openocd_reset = ""
         if board.openocd.reset_config:
             openocd_reset = "; ".join(board.openocd.reset_config)
@@ -138,7 +139,7 @@ class ProjectGenerator:
             part
             for part in [
                 openocd_reset,
-                f"transport select {openocd_transport}",
+                f"transport select {openocd_transport}" if openocd_transport else "",
                 f"adapter speed {openocd_speed}",
                 "init",
                 "reset init",
@@ -165,6 +166,15 @@ class ProjectGenerator:
             "openocd_target_cfg": "openocd/target.cfg",
             "openocd_commands": openocd_commands,
         }
+
+    @staticmethod
+    def _normalize_transport(value: str | None) -> str | None:
+        if not value:
+            return None
+        normalized = value.strip().lower()
+        if normalized in {"", "auto", "none"}:
+            return None
+        return value
 
     @staticmethod
     def _normalize_pins(

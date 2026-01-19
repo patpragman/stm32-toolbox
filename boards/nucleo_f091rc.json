@@ -20,7 +20,7 @@
   },
   "openocd": {
     "interface_cfg": "interface/stlink.cfg",
-    "transport": "swd",
+    "transport": "auto",
     "speed_khz": 4000
   }
 }

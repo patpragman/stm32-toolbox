@@ -32,13 +32,14 @@ class Flasher:
 
         speed = self.config.adapter_speed_khz or board.openocd.speed_khz or pack.openocd.speed_khz
         transport = board.openocd.transport or pack.openocd.transport
+        transport = self._normalize_transport(transport)
 
         script_parts = []
         if board.openocd.reset_config:
             script_parts.extend(board.openocd.reset_config)
         script_parts.extend(
             [
-                f"transport select {transport}",
+                f"transport select {transport}" if transport else "",
                 f"adapter speed {speed}",
                 "init",
                 "reset init",
@@ -59,6 +60,15 @@ class Flasher:
         code = stream_process(cmd, cwd=elf_path.parent, on_line=on_line)
         if code != 0:
             raise ProcessError(cmd, code, "OpenOCD flash failed")
+
+    @staticmethod
+    def _normalize_transport(value: str | None) -> str | None:
+        if not value:
+            return None
+        normalized = value.strip().lower()
+        if normalized in {"", "auto", "none"}:
+            return None
+        return value
 
 
 @dataclass(frozen=True)
