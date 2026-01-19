@@ -25,7 +25,7 @@ class ProjectWizard(ttk.Frame):
             )
 
     def _browse(self) -> None:
-        path = filedialog.askdirectory()
+        path = filedialog.askdirectory(mustexist=False)
         if path:
             self._path_var.set(path)
 

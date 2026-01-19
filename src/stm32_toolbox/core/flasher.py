@@ -59,3 +59,20 @@ class Flasher:
         code = stream_process(cmd, cwd=elf_path.parent, on_line=on_line)
         if code != 0:
             raise ProcessError(cmd, code, "OpenOCD flash failed")
+
+
+@dataclass(frozen=True)
+class MakeFlashConfig:
+    project_dir: Path
+    target: str = "flash"
+
+
+class MakeFlasher:
+    def __init__(self, config: MakeFlashConfig) -> None:
+        self.config = config
+
+    def flash(self, on_line) -> None:
+        cmd = ["make", self.config.target]
+        code = stream_process(cmd, cwd=self.config.project_dir, on_line=on_line)
+        if code != 0:
+            raise ProcessError(cmd, code, "Make flash failed")

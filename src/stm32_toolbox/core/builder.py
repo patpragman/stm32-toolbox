@@ -13,6 +13,7 @@ from .util import stream_process
 class BuildConfig:
     source_dir: Path
     build_dir: Path
+    build_system: str
 
 
 class Builder:
@@ -20,6 +21,8 @@ class Builder:
         self.config = config
 
     def configure(self, on_line) -> None:
+        if self.config.build_system == "Make":
+            return
         cmd = [
             "cmake",
             "-S",
@@ -34,11 +37,14 @@ class Builder:
             raise ProcessError(cmd, code, "CMake configure failed")
 
     def build(self, on_line) -> None:
-        cmd = [
-            "cmake",
-            "--build",
-            str(self.config.build_dir),
-        ]
+        if self.config.build_system == "Make":
+            cmd = ["make"]
+        else:
+            cmd = [
+                "cmake",
+                "--build",
+                str(self.config.build_dir),
+            ]
         code = stream_process(cmd, cwd=self.config.source_dir, on_line=on_line)
         if code != 0:
             raise ProcessError(cmd, code, "Build failed")

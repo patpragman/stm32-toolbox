@@ -11,9 +11,15 @@ from .state import load_settings, save_settings, Settings
 from .core.boards import BoardLibrary
 from .core.packs import PackLibrary
 from .core.generator import ProjectGenerator
-from .core.toolchain import detect_tools, require_tools
+from .core.toolchain import (
+    detect_tools,
+    require_build_tools,
+    require_flash_tools,
+    BUILD_SYSTEM_CMAKE,
+    BUILD_SYSTEM_MAKE,
+)
 from .core.builder import Builder, BuildConfig
-from .core.flasher import Flasher, FlashConfig
+from .core.flasher import Flasher, FlashConfig, MakeFlasher, MakeFlashConfig
 from .core.discover import list_serial_ports, prefer_stlink
 from .core.serialmon import SerialMonitor, SerialConfig
 from .core.errors import normalize_error
@@ -21,6 +27,7 @@ from .ui.board_select import BoardSelect
 from .ui.project_wizard import ProjectWizard
 from .ui.log_view import LogView
 from .ui.serial_view import SerialView
+from .ui.tool_status import ToolStatusView
 
 
 class ToolboxApp(tk.Tk):
@@ -35,10 +42,11 @@ class ToolboxApp(tk.Tk):
         self.serial_monitor = SerialMonitor()
 
         self._current_project_dir: Path | None = None
+        self._build_system_var = tk.StringVar()
 
         self._build_ui()
         self._refresh_ports()
-        self._log_toolchain_status()
+        self._refresh_tools()
 
     def _build_ui(self) -> None:
         root = ttk.Frame(self, padding=12)
@@ -61,9 +69,22 @@ class ToolboxApp(tk.Tk):
 
         actions = ttk.LabelFrame(left, text="Actions", padding=8)
         actions.pack(fill=tk.X)
+        ttk.Label(actions, text="Build System").pack(anchor=tk.W)
+        self._build_system_var.set(self.settings.build_system or BUILD_SYSTEM_CMAKE)
+        self._build_system_combo = ttk.Combobox(
+            actions,
+            state="readonly",
+            values=[BUILD_SYSTEM_CMAKE, BUILD_SYSTEM_MAKE],
+            textvariable=self._build_system_var,
+        )
+        self._build_system_combo.pack(fill=tk.X, pady=(0, 6))
+        self._build_system_combo.bind("<<ComboboxSelected>>", self._on_build_system_change)
         ttk.Button(actions, text="Build", command=self._build_project).pack(fill=tk.X)
         ttk.Button(actions, text="Flash", command=self._flash_project).pack(fill=tk.X, pady=4)
         ttk.Button(actions, text="Refresh Ports", command=self._refresh_ports).pack(fill=tk.X)
+
+        self.tool_status = ToolStatusView(left, on_refresh=self._refresh_tools)
+        self.tool_status.pack(fill=tk.X, pady=(12, 0))
 
         self.serial_view = SerialView(
             right,
@@ -78,19 +99,25 @@ class ToolboxApp(tk.Tk):
     def _log(self, line: str) -> None:
         self.after(0, lambda: self.log_view.append(line))
 
-    def _log_toolchain_status(self) -> None:
+    def _refresh_tools(self) -> None:
         status = detect_tools()
-        missing = [name for name, value in status.__dict__.items() if value is None]
-        if missing:
-            self._log(f"Missing tools: {', '.join(missing)}")
-        else:
-            self._log("All required tools detected.")
+        self.tool_status.set_status(status)
 
     def _get_selected_board_pack(self):
         board_id = self.board_select.get_selected_id()
         board = self.board_lib.get(board_id)
         pack = self.pack_lib.get(board.pack)
         return board, pack
+
+    def _on_build_system_change(self, _event=None) -> None:
+        self.settings.build_system = self._build_system_var.get()
+        save_settings(self.settings)
+
+    def _get_build_system(self) -> str:
+        value = self._build_system_var.get()
+        if value in (BUILD_SYSTEM_CMAKE, BUILD_SYSTEM_MAKE):
+            return value
+        return BUILD_SYSTEM_CMAKE
 
     def _generate_project(self) -> None:
         project_dir = self.project_wizard.get_project_dir()
@@ -127,10 +154,12 @@ class ToolboxApp(tk.Tk):
         def work():
             try:
                 status = detect_tools()
-                require_tools(status)
+                build_system = self._get_build_system()
+                require_build_tools(status, build_system)
                 config = BuildConfig(
                     source_dir=self._current_project_dir,
                     build_dir=self._current_project_dir / "build",
+                    build_system=build_system,
                 )
                 builder = Builder(config)
                 builder.configure(self._log)
@@ -150,6 +179,17 @@ class ToolboxApp(tk.Tk):
 
         def work():
             try:
+                build_system = self._get_build_system()
+                status = detect_tools()
+                require_flash_tools(status, build_system)
+                if build_system == BUILD_SYSTEM_MAKE:
+                    make_flasher = MakeFlasher(
+                        MakeFlashConfig(project_dir=self._current_project_dir)
+                    )
+                    make_flasher.flash(self._log)
+                    self._log("Make flash completed.")
+                    return
+
                 board, pack = self._get_selected_board_pack()
                 elf = self._find_elf(self._current_project_dir / "build")
                 if not elf:

@@ -19,11 +19,13 @@ pack- and board-driven: adding a new board should be data-only.
 - `source .venv/bin/activate` - activate the venv.
 - `pip install -e .` - install in editable mode.
 - `stm32-toolbox` - launch the GUI.
-- `python -m unittest` - run unit tests.
+- `python -m unittest discover -s tests` - run unit tests.
 
 Generated projects build with:
 - `cmake -S . -B build -G Ninja`
 - `cmake --build build`
+If you use an existing Make-based project instead, the GUI can run `make` and
+`make flash`.
 
 ## Coding Style & Naming Conventions
 - Python: 4-space indentation, `snake_case` functions/variables, `CamelCase`

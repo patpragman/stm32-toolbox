@@ -17,6 +17,7 @@ class Settings:
     last_board_id: str = ""
     last_serial_port: str = ""
     last_project_dir: str = ""
+    build_system: str = "CMake/Ninja"
 
     @classmethod
     def from_dict(cls, data: dict) -> "Settings":
@@ -26,6 +27,7 @@ class Settings:
             last_board_id=str(data.get("last_board_id", "")),
             last_serial_port=str(data.get("last_serial_port", "")),
             last_project_dir=str(data.get("last_project_dir", "")),
+            build_system=str(data.get("build_system", "CMake/Ninja")),
         )
 
     def to_dict(self) -> dict:
@@ -35,6 +37,7 @@ class Settings:
             "last_board_id": self.last_board_id,
             "last_serial_port": self.last_serial_port,
             "last_project_dir": self.last_project_dir,
+            "build_system": self.build_system,
         }
 
 

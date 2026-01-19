@@ -38,6 +38,9 @@ cmake -S . -B build -G Ninja
 cmake --build build
 ```
 
+If you already have a Make-based project, you can select the Make build system
+in the GUI and it will run `make` and `make flash`.
+
 ## Status
 
 This repository contains the initial scaffolding and core modules. Expand packs,

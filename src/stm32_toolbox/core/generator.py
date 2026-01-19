@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .boards import BoardDefinition
@@ -64,8 +64,9 @@ class ProjectGenerator:
         toolchain_path = self.output_dir / "cmake" / "toolchain-arm-none-eabi.cmake"
         atomic_write(toolchain_path, TOOLCHAIN_CMAKE)
 
+        generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         manifest = {
-            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "generated_at": generated_at,
             "board": board.id,
             "pack": pack.id,
             "mcu": board.mcu,
