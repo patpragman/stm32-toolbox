@@ -17,20 +17,26 @@ SECTIONS
   {
     *(.text*)
     *(.rodata*)
+    . = ALIGN(4);
+    __etext = .;
   } > FLASH
 
-  .data : AT (ADDR(.text) + SIZEOF(.text))
+  .data : AT (__etext)
   {
+    . = ALIGN(4);
     __sdata = .;
     *(.data*)
+    . = ALIGN(4);
     __edata = .;
   } > RAM
 
   .bss :
   {
+    . = ALIGN(4);
     __sbss = .;
     *(.bss*)
     *(COMMON)
+    . = ALIGN(4);
     __ebss = .;
   } > RAM
 
