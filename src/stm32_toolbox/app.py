@@ -137,6 +137,11 @@ class ToolboxApp(tk.Tk):
             return value
         return BUILD_SYSTEM_CMAKE
 
+    def _is_toolbox_project(self) -> bool:
+        if not self._current_project_dir:
+            return False
+        return (self._current_project_dir / "stm32toolbox.project.json").exists()
+
     def _generate_project(self) -> None:
         project_dir = self.project_wizard.get_project_dir()
         if not project_dir:
@@ -181,7 +186,11 @@ class ToolboxApp(tk.Tk):
             try:
                 status = detect_tools()
                 build_system = self._get_build_system()
-                require_build_tools(status, build_system)
+                require_build_tools(
+                    status,
+                    build_system,
+                    needs_cmake=self._is_toolbox_project(),
+                )
                 config = BuildConfig(
                     source_dir=self._current_project_dir,
                     build_dir=self._current_project_dir / "build",
@@ -211,7 +220,11 @@ class ToolboxApp(tk.Tk):
             try:
                 build_system = self._get_build_system()
                 status = detect_tools()
-                require_flash_tools(status, build_system)
+                require_flash_tools(
+                    status,
+                    build_system,
+                    needs_openocd=self._is_toolbox_project(),
+                )
                 if build_system == BUILD_SYSTEM_MAKE:
                     make_flasher = MakeFlasher(
                         MakeFlashConfig(project_dir=self._current_project_dir)

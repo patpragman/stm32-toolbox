@@ -39,7 +39,8 @@ cmake --build build
 ```
 
 If you already have a Make-based project, you can select the Make build system
-in the GUI and it will run `make` and `make flash`.
+in the GUI and it will run `make` and `make flash`. Generated projects include
+a Makefile wrapper that delegates to CMake/Ninja and OpenOCD.
 
 ## GPIO + HAL
 

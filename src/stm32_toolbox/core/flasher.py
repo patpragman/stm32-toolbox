@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .boards import BoardDefinition
 from .packs import PackDefinition
-from .errors import ProcessError
+from .errors import ProcessError, ConfigError
 from .util import stream_process
 
 
@@ -72,6 +72,8 @@ class MakeFlasher:
         self.config = config
 
     def flash(self, on_line) -> None:
+        if not (self.config.project_dir / "Makefile").exists():
+            raise ConfigError("Makefile not found in the project directory.")
         cmd = ["make", self.config.target]
         code = stream_process(cmd, cwd=self.config.project_dir, on_line=on_line)
         if code != 0:

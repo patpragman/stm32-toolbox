@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from .errors import ProcessError
+from .errors import ProcessError, ConfigError
 from .util import stream_process
 
 
@@ -38,6 +38,8 @@ class Builder:
 
     def build(self, on_line) -> None:
         if self.config.build_system == "Make":
+            if not (self.config.source_dir / "Makefile").exists():
+                raise ConfigError("Makefile not found in the project directory.")
             cmd = ["make"]
         else:
             cmd = [

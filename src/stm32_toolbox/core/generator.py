@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
+import shutil
 
 from .boards import BoardDefinition
 from .packs import PackDefinition
@@ -59,6 +60,7 @@ class ProjectGenerator:
         self._render(env, pack.templates.system, "system.c", context)
         self._render(env, pack.templates.main, "main.c", context)
         self._render(env, pack.templates.family_gpio, "family_gpio.h", context)
+        self._render(env, pack.templates.makefile, "Makefile", context)
         self._render(env, pack.templates.hal_h, "hal.h", context)
         self._render(env, pack.templates.hal_gpio_h, "hal_gpio.h", context)
         self._render(env, pack.templates.hal_gpio_c, "hal_gpio.c", context)
@@ -79,6 +81,17 @@ class ProjectGenerator:
 
         toolchain_path = self.output_dir / "cmake" / "toolchain-arm-none-eabi.cmake"
         atomic_write(toolchain_path, TOOLCHAIN_CMAKE)
+
+        openocd_dir = self.output_dir / "openocd"
+        ensure_dir(openocd_dir)
+        target_src = Path(pack.openocd.target_cfg)
+        if not target_src.is_absolute():
+            target_src = pack.root / target_src
+        target_dst = openocd_dir / "target.cfg"
+        try:
+            shutil.copyfile(target_src, target_dst)
+        except OSError as exc:
+            raise GenerationError(f"Unable to copy OpenOCD target config: {exc}") from exc
 
         generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         manifest = {
@@ -116,6 +129,24 @@ class ProjectGenerator:
         pins: list[dict],
     ) -> dict:
         led_enum_name = pins[0]["enum_name"] if pins else "APP_PIN_LED"
+        openocd_speed = board.openocd.speed_khz or pack.openocd.speed_khz
+        openocd_transport = board.openocd.transport or pack.openocd.transport
+        openocd_reset = ""
+        if board.openocd.reset_config:
+            openocd_reset = "; ".join(board.openocd.reset_config)
+        openocd_commands = "; ".join(
+            part
+            for part in [
+                openocd_reset,
+                f"transport select {openocd_transport}",
+                f"adapter speed {openocd_speed}",
+                "init",
+                "reset init",
+                "program $(ELF) verify reset exit",
+            ]
+            if part
+        )
+
         return {
             "board": asdict(board),
             "pack": asdict(pack),
@@ -129,6 +160,10 @@ class ProjectGenerator:
             "system_clock_hz": pack.system_clock_hz,
             "led_enum_name": led_enum_name,
             "pins": pins,
+            "project_name": board.id,
+            "openocd_interface_cfg": board.openocd.interface_cfg,
+            "openocd_target_cfg": "openocd/target.cfg",
+            "openocd_commands": openocd_commands,
         }
 
     @staticmethod

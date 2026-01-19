@@ -15,6 +15,7 @@
     "main": "main_blinky.c.j2",
     "family_gpio": "family_gpio.j2",
     "startup": "startup_gcc.s",
+    "makefile": "Makefile.j2",
     "hal_h": "hal.h.j2",
     "hal_gpio_h": "hal_gpio.h.j2",
     "hal_gpio_c": "hal_gpio.c.j2",

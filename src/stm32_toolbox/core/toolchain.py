@@ -44,15 +44,29 @@ def require_tools(status: ToolchainStatus, required: tuple[str, ...]) -> None:
         raise ToolNotFoundError(", ".join(missing))
 
 
-def require_build_tools(status: ToolchainStatus, build_system: str) -> None:
+def require_build_tools(
+    status: ToolchainStatus,
+    build_system: str,
+    needs_cmake: bool = False,
+) -> None:
     if build_system == BUILD_SYSTEM_MAKE:
-        require_tools(status, ("make", "arm_none_eabi_gcc", "arm_none_eabi_objcopy"))
+        required = ["make", "arm_none_eabi_gcc", "arm_none_eabi_objcopy"]
+        if needs_cmake:
+            required.extend(["cmake", "ninja"])
+        require_tools(status, tuple(required))
         return
     require_tools(status, ("arm_none_eabi_gcc", "arm_none_eabi_objcopy", "cmake", "ninja"))
 
 
-def require_flash_tools(status: ToolchainStatus, build_system: str) -> None:
+def require_flash_tools(
+    status: ToolchainStatus,
+    build_system: str,
+    needs_openocd: bool = False,
+) -> None:
     if build_system == BUILD_SYSTEM_MAKE:
-        require_tools(status, ("make",))
+        required = ["make"]
+        if needs_openocd:
+            required.append("openocd")
+        require_tools(status, tuple(required))
         return
     require_tools(status, ("openocd",))

@@ -18,6 +18,7 @@ class PackTemplates:
     main: str
     family_gpio: str
     startup: str
+    makefile: str
     hal_h: str
     hal_gpio_h: str
     hal_gpio_c: str
@@ -76,6 +77,7 @@ class PackLibrary:
                 main=data["templates"]["main"],
                 family_gpio=data["templates"]["family_gpio"],
                 startup=data["templates"]["startup"],
+                makefile=data["templates"]["makefile"],
                 hal_h=data["templates"]["hal_h"],
                 hal_gpio_h=data["templates"]["hal_gpio_h"],
                 hal_gpio_c=data["templates"]["hal_gpio_c"],

@@ -85,6 +85,11 @@ def normalize_error(exc: Exception) -> ErrorDetail:
             summary=str(exc),
             action="Check the serial port selection and permissions.",
         )
+    if isinstance(exc, ConfigError):
+        return ErrorDetail(
+            summary=str(exc),
+            action="If using Make, ensure a Makefile exists or switch to CMake/Ninja.",
+        )
     return ErrorDetail(
         summary=str(exc) or exc.__class__.__name__,
         action="Review the logs for details and try again.",
