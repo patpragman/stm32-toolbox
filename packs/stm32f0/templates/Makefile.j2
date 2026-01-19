@@ -1,15 +1,18 @@
 PROJECT := {{ project_name }}
 BUILD_DIR ?= build
 OUT_DIR ?= out
+BUILD_STAMP := $(BUILD_DIR)/.dir
+OUT_STAMP := $(OUT_DIR)/.dir
 ELF := $(BUILD_DIR)/$(PROJECT).elf
 HEX := $(OUT_DIR)/$(PROJECT).hex
 BIN := $(OUT_DIR)/$(PROJECT).bin
 MAP := $(BUILD_DIR)/$(PROJECT).map
 
-CC ?= arm-none-eabi-gcc
-AS ?= arm-none-eabi-gcc
-OBJCOPY ?= arm-none-eabi-objcopy
-SIZE ?= arm-none-eabi-size
+TOOLCHAIN_PREFIX ?= arm-none-eabi-
+override CC := $(TOOLCHAIN_PREFIX)gcc
+override AS := $(TOOLCHAIN_PREFIX)gcc
+override OBJCOPY := $(TOOLCHAIN_PREFIX)objcopy
+override SIZE := $(TOOLCHAIN_PREFIX)size
 OPENOCD ?= openocd
 
 CPU_FLAGS := -mcpu={{ pack.cpu }} -mthumb
@@ -37,25 +40,27 @@ OPENOCD_CMDS := {{ openocd_commands }}
 
 all: $(ELF) $(HEX) $(BIN)
 
-$(BUILD_DIR):
+$(BUILD_STAMP):
 	mkdir -p $(BUILD_DIR)
+	touch $@
 
-$(OUT_DIR):
+$(OUT_STAMP):
 	mkdir -p $(OUT_DIR)
+	touch $@
 
-$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.c | $(BUILD_STAMP)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILD_DIR)/%.o: %.s | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.s | $(BUILD_STAMP)
 	$(AS) $(ASFLAGS) -c $< -o $@
 
 $(ELF): $(OBJS)
 	$(CC) $(OBJS) $(LDFLAGS) -o $@
 
-$(HEX): $(ELF) | $(OUT_DIR)
+$(HEX): $(ELF) | $(OUT_STAMP)
 	$(OBJCOPY) -O ihex $< $@
 
-$(BIN): $(ELF) | $(OUT_DIR)
+$(BIN): $(ELF) | $(OUT_STAMP)
 	$(OBJCOPY) -O binary $< $@
 
 size: $(ELF)
