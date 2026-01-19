@@ -128,7 +128,11 @@ class ProjectGenerator:
         pack: PackDefinition,
         pins: list[dict],
     ) -> dict:
-        led_enum_name = pins[0]["enum_name"] if pins else "APP_PIN_LED"
+        led_enum_name = "APP_PIN_LED"
+        for pin in pins:
+            if pin.get("is_led"):
+                led_enum_name = pin["enum_name"]
+                break
         openocd_speed = board.openocd.speed_khz or pack.openocd.speed_khz
         openocd_transport = board.openocd.transport or pack.openocd.transport
         openocd_transport = ProjectGenerator._normalize_transport(openocd_transport)
@@ -185,6 +189,9 @@ class ProjectGenerator:
         normalized = []
         names = set()
         locations = set()
+        led_location = (board.led.port, board.led.pin)
+        led_alias = (led_alias or board.led.name or "LED").strip() or "LED"
+        led_entry_index: int | None = None
 
         def add_pin(entry: dict) -> None:
             name = entry.get("name", "").strip()
@@ -223,44 +230,46 @@ class ProjectGenerator:
                 raise GenerationError(f"Duplicate GPIO pin: P{port}{pin}")
             locations.add(location)
 
-            normalized.append(
+            entry = {
+                "name": name,
+                "enum_name": enum_name,
+                "port": port,
+                "pin": pin,
+                "mode": mode,
+                "pull": pull,
+                "initial": initial,
+                "active_high": active_high,
+                "port_enum": f"HAL_PORT_{port}",
+                "mode_enum": "HAL_GPIO_MODE_OUTPUT"
+                if mode == "output"
+                else "HAL_GPIO_MODE_INPUT",
+                "pull_enum": {
+                    "none": "HAL_GPIO_PULL_NONE",
+                    "up": "HAL_GPIO_PULL_UP",
+                    "down": "HAL_GPIO_PULL_DOWN",
+                }[pull],
+                "initial_high": initial == "high",
+                "is_led": location == led_location,
+            }
+            normalized.append(entry)
+            if entry["is_led"]:
+                led_entry_index = len(normalized) - 1
+
+        if led_entry_index is None:
+            add_pin(
                 {
-                    "name": name,
-                    "enum_name": enum_name,
-                    "port": port,
-                    "pin": pin,
-                    "mode": mode,
-                    "pull": pull,
-                    "initial": initial,
-                    "active_high": active_high,
-                    "port_enum": f"HAL_PORT_{port}",
-                    "mode_enum": "HAL_GPIO_MODE_OUTPUT"
-                    if mode == "output"
-                    else "HAL_GPIO_MODE_INPUT",
-                    "pull_enum": {
-                        "none": "HAL_GPIO_PULL_NONE",
-                        "up": "HAL_GPIO_PULL_UP",
-                        "down": "HAL_GPIO_PULL_DOWN",
-                    }[pull],
-                    "initial_high": initial == "high",
+                    "name": led_alias,
+                    "port": board.led.port,
+                    "pin": board.led.pin,
+                    "mode": "output",
+                    "pull": "none",
+                    "initial": "low",
+                    "active_high": board.led.active_high,
                 }
             )
-
-        alias = (led_alias or "LED").strip()
-        if not alias:
-            alias = "LED"
-
-        add_pin(
-            {
-                "name": alias,
-                "port": board.led.port,
-                "pin": board.led.pin,
-                "mode": "output",
-                "pull": "none",
-                "initial": "low",
-                "active_high": board.led.active_high,
-            }
-        )
+        else:
+            normalized[led_entry_index]["name"] = led_alias
+            normalized[led_entry_index]["enum_name"] = f"APP_PIN_{ProjectGenerator._to_identifier(led_alias)}"
 
         for entry in pins:
             add_pin(entry)

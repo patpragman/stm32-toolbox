@@ -51,7 +51,7 @@ class GeneratorTests(unittest.TestCase):
             self.assertIn("#define GPIO_BASE 0x48000000U", family_gpio)
 
             app_pins = (output_dir / "app_pins.h").read_text(encoding="utf-8")
-            self.assertIn("APP_PIN_LED", app_pins)
+            self.assertTrue("APP_PIN_LED" in app_pins or "APP_PIN_LD2" in app_pins)
 
     def test_generate_project_with_custom_pins(self) -> None:
         board = BoardLibrary(Path("boards")).get("nucleo_f091rc")

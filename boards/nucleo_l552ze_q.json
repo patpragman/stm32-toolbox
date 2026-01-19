@@ -14,6 +14,7 @@
     }
   },
   "led": {
+    "name": "LD2",
     "port": "B",
     "pin": 7,
     "active_high": true

@@ -6,7 +6,8 @@
     "strategy": "cube_root"
   },
   "defaults": {
-    "system_clock_hz": 8000000
+    "system_clock_hz": 8000000,
+    "gpio_ports": ["A", "B", "C", "D", "E", "F"]
   },
   "templates": {
     "cmakelists": "CMakeLists.txt.j2",

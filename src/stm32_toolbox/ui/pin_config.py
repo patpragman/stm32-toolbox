@@ -7,19 +7,21 @@ from tkinter import ttk, messagebox
 
 
 class PinDialog(tk.Toplevel):
-    def __init__(self, master) -> None:
+    def __init__(self, master, initial: dict | None = None) -> None:
         super().__init__(master)
         self.title("Add GPIO Pin")
         self.resizable(False, False)
         self.result = None
 
-        self._name_var = tk.StringVar()
-        self._port_var = tk.StringVar(value="A")
-        self._pin_var = tk.StringVar(value="0")
-        self._mode_var = tk.StringVar(value="output")
-        self._pull_var = tk.StringVar(value="none")
-        self._initial_var = tk.StringVar(value="low")
-        self._active_high_var = tk.BooleanVar(value=True)
+        initial = initial or {}
+
+        self._name_var = tk.StringVar(value=initial.get("name", ""))
+        self._port_var = tk.StringVar(value=initial.get("port", "A"))
+        self._pin_var = tk.StringVar(value=str(initial.get("pin", 0)))
+        self._mode_var = tk.StringVar(value=initial.get("mode", "output"))
+        self._pull_var = tk.StringVar(value=initial.get("pull", "none"))
+        self._initial_var = tk.StringVar(value=initial.get("initial", "low"))
+        self._active_high_var = tk.BooleanVar(value=initial.get("active_high", True))
 
         form = ttk.Frame(self, padding=10)
         form.pack(fill=tk.BOTH, expand=True)
@@ -86,7 +88,11 @@ class PinDialog(tk.Toplevel):
         buttons = ttk.Frame(form)
         buttons.grid(row=7, column=0, columnspan=2, sticky=tk.E, pady=(10, 0))
         ttk.Button(buttons, text="Cancel", command=self._cancel).pack(side=tk.RIGHT)
-        ttk.Button(buttons, text="Add", command=self._accept).pack(side=tk.RIGHT, padx=(0, 6))
+        ttk.Button(
+            buttons,
+            text="Add" if not initial else "Update",
+            command=self._accept,
+        ).pack(side=tk.RIGHT, padx=(0, 6))
 
         self.transient(master)
         self.grab_set()
@@ -132,6 +138,9 @@ class PinConfigView(ttk.LabelFrame):
         super().__init__(master, text="GPIO Pins", padding=8, **kwargs)
         self._on_change = on_change
         self._led_name_var = tk.StringVar(value="LED")
+        self._led_port: str | None = None
+        self._led_pin: int | None = None
+        self._ports: list[str] = []
 
         self._led_label = ttk.Label(self, text="Board LED: -")
         self._led_label.pack(anchor=tk.W)
@@ -164,11 +173,18 @@ class PinConfigView(ttk.LabelFrame):
         buttons = ttk.Frame(self)
         buttons.pack(fill=tk.X)
         ttk.Button(buttons, text="Add", command=self._add_pin).pack(side=tk.LEFT)
-        ttk.Button(buttons, text="Remove", command=self._remove_pin).pack(side=tk.LEFT, padx=6)
+        ttk.Button(buttons, text="Edit", command=self._edit_pin).pack(side=tk.LEFT, padx=6)
+        ttk.Button(buttons, text="Remove", command=self._remove_pin).pack(side=tk.LEFT)
+        ttk.Button(buttons, text="Populate All", command=self.populate_all).pack(
+            side=tk.LEFT, padx=6
+        )
         ttk.Button(buttons, text="Clear", command=self._clear_pins).pack(side=tk.LEFT)
 
-    def set_board_led(self, port: str, pin: int) -> None:
+    def set_board_led(self, name: str, port: str, pin: int) -> None:
         self._led_label.configure(text=f"Board LED: {port}{pin}")
+        self._led_name_var.set(name)
+        self._led_port = port
+        self._led_pin = pin
 
     def get_led_alias(self) -> str:
         return self._led_name_var.get().strip()
@@ -177,22 +193,60 @@ class PinConfigView(ttk.LabelFrame):
         dialog = PinDialog(self)
         if not dialog.result:
             return
-        data = dialog.result
-        values = (
-            data["name"],
-            data["port"],
-            str(data["pin"]),
-            data["mode"],
-            data["pull"],
-            data["initial"],
-            "high" if data["active_high"] else "low",
+        self._insert_pin(dialog.result)
+        self._notify_change()
+
+    def _edit_pin(self) -> None:
+        selection = self._tree.selection()
+        if not selection:
+            return
+        item = selection[0]
+        name, port, pin, mode, pull, initial, active = self._tree.item(item, "values")
+        dialog = PinDialog(
+            self,
+            {
+                "name": name,
+                "port": port,
+                "pin": int(pin),
+                "mode": mode,
+                "pull": pull,
+                "initial": initial,
+                "active_high": active == "high",
+            },
         )
-        self._tree.insert("", tk.END, values=values)
+        if not dialog.result:
+            return
+        self._tree.delete(item)
+        self._insert_pin(dialog.result)
         self._notify_change()
 
     def _remove_pin(self) -> None:
         for item in self._tree.selection():
             self._tree.delete(item)
+        self._notify_change()
+
+    def populate_all(self) -> None:
+        if not self._led_port or self._led_pin is None:
+            return
+        for item in self._tree.get_children():
+            self._tree.delete(item)
+        led_name = self.get_led_alias() or "LED"
+        for port in self._ports or []:
+            for pin in range(16):
+                name = f"P{port}{pin}"
+                if port == self._led_port and pin == self._led_pin:
+                    name = led_name
+                self._insert_pin(
+                    {
+                        "name": name,
+                        "port": port,
+                        "pin": pin,
+                        "mode": "input",
+                        "pull": "none",
+                        "initial": "low",
+                        "active_high": True,
+                    }
+                )
         self._notify_change()
 
     def _clear_pins(self) -> None:
@@ -220,3 +274,18 @@ class PinConfigView(ttk.LabelFrame):
                 }
             )
         return pins
+
+    def set_ports(self, ports: list[str]) -> None:
+        self._ports = ports
+
+    def _insert_pin(self, data: dict) -> None:
+        values = (
+            data["name"],
+            data["port"],
+            str(data["pin"]),
+            data["mode"],
+            data["pull"],
+            data["initial"],
+            "high" if data["active_high"] else "low",
+        )
+        self._tree.insert("", tk.END, values=values)

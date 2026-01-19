@@ -46,6 +46,7 @@ class PackDefinition:
     templates: PackTemplates
     openocd: OpenOCDDefaults
     system_clock_hz: int
+    gpio_ports: list[str]
     root: Path
 
 
@@ -101,6 +102,7 @@ class PackLibrary:
                 templates=templates,
                 openocd=openocd,
                 system_clock_hz=int(data.get("defaults", {}).get("system_clock_hz", 0)),
+                gpio_ports=list(data.get("defaults", {}).get("gpio_ports", [])),
                 root=pack_dir,
             )
             self._packs[pack.id] = pack

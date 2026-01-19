@@ -18,6 +18,7 @@ class MemoryRegion:
 
 @dataclass(frozen=True)
 class LedDefinition:
+    name: str
     port: str
     pin: int
     active_high: bool = True
@@ -69,6 +70,7 @@ class BoardLibrary:
                 length=int(data["memory"]["ram"]["length"], 0),
             )
             led = LedDefinition(
+                name=str(data["led"].get("name", "LED")),
                 port=data["led"]["port"],
                 pin=int(data["led"]["pin"]),
                 active_high=bool(data["led"].get("active_high", True)),
