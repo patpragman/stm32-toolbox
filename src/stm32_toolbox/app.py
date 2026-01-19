@@ -310,8 +310,19 @@ class ToolboxApp(tk.Tk):
         ports = prefer_stlink(list_serial_ports())
         devices = [p.device for p in ports]
         self.serial_view.set_ports(devices)
-        if self.settings.last_serial_port in devices:
-            self.serial_view.select_port(self.settings.last_serial_port)
+        preferred = next(
+            (
+                dev
+                for dev in devices
+                if dev.startswith("/dev/ttyACM") or dev.startswith("/dev/ttyUSB")
+            ),
+            "",
+        )
+        last = self.settings.last_serial_port
+        if last and last in devices and not (preferred and last.startswith("/dev/ttyS")):
+            self.serial_view.select_port(last)
+        elif preferred:
+            self.serial_view.select_port(preferred)
 
     def _load_main_editor(self) -> bool:
         if not self._current_project_dir:

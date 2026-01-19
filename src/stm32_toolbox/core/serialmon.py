@@ -60,4 +60,12 @@ class SerialMonitor:
             except (serial.SerialException, OSError) as exc:
                 if on_status:
                     on_status(f"Serial disconnected: {exc}")
+                errno = getattr(exc, "errno", None)
+                if isinstance(exc, PermissionError) or errno == 13:
+                    if on_status:
+                        on_status(
+                            "Serial monitor stopped: permission denied. "
+                            "Pick the ST-LINK VCP port or add your user to dialout."
+                        )
+                    break
                 time.sleep(0.5)

@@ -11,25 +11,25 @@
 
 g_pfnVectors:
     .word __StackTop
-    .word Reset_Handler
-    .word NMI_Handler
-    .word HardFault_Handler
-    .word MemManage_Handler
-    .word BusFault_Handler
-    .word UsageFault_Handler
+    .word Reset_Handler + 1
+    .word NMI_Handler + 1
+    .word HardFault_Handler + 1
+    .word MemManage_Handler + 1
+    .word BusFault_Handler + 1
+    .word UsageFault_Handler + 1
     .word 0
     .word 0
     .word 0
     .word 0
-    .word SVC_Handler
-    .word DebugMon_Handler
+    .word SVC_Handler + 1
+    .word DebugMon_Handler + 1
     .word 0
-    .word PendSV_Handler
-    .word SysTick_Handler
+    .word PendSV_Handler + 1
+    .word SysTick_Handler + 1
 
     /* Placeholder IRQs */
     .rept 64
-    .word Default_Handler
+    .word Default_Handler + 1
     .endr
 
 .section .text.Reset_Handler
