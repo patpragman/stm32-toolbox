@@ -135,7 +135,8 @@ class ToolboxApp(tk.Tk):
             board.led.pin,
             board.led.active_high,
         )
-        self.pin_config.set_ports(_pack.gpio_ports)
+        ports = board.gpio_ports or _pack.gpio_ports
+        self.pin_config.set_ports(ports)
         if board_changed or not self.pin_config.get_pins():
             self.pin_config.populate_all()
         if board_changed:

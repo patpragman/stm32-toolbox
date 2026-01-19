@@ -19,6 +19,7 @@
     "pin": 7,
     "active_high": true
   },
+  "gpio_ports": ["A", "B", "C", "D", "E", "F", "G", "H"],
   "openocd": {
     "interface_cfg": "interface/stlink.cfg",
     "transport": "auto",

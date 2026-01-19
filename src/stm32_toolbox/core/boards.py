@@ -42,6 +42,7 @@ class BoardDefinition:
     ram: MemoryRegion
     led: LedDefinition
     openocd: OpenOCDBoardConfig
+    gpio_ports: list[str] | None
     root: Path
 
 
@@ -81,6 +82,10 @@ class BoardLibrary:
                 speed_khz=int(data["openocd"].get("speed_khz", 4000)),
                 reset_config=data["openocd"].get("reset_config"),
             )
+            gpio_ports = data.get("gpio_ports")
+            if gpio_ports:
+                gpio_ports = [str(port).upper() for port in gpio_ports]
+
             board = BoardDefinition(
                 id=data["id"],
                 name=data.get("name", data["id"]),
@@ -90,6 +95,7 @@ class BoardLibrary:
                 ram=ram,
                 led=led,
                 openocd=openocd,
+                gpio_ports=gpio_ports,
                 root=board_path.parent,
             )
             self._boards[board.id] = board

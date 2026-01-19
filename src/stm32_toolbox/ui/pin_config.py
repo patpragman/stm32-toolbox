@@ -7,7 +7,12 @@ from tkinter import ttk, messagebox
 
 
 class PinDialog(tk.Toplevel):
-    def __init__(self, master, initial: dict | None = None) -> None:
+    def __init__(
+        self,
+        master,
+        initial: dict | None = None,
+        ports: list[str] | None = None,
+    ) -> None:
         super().__init__(master)
         self.title("Add GPIO Pin")
         self.resizable(False, False)
@@ -16,7 +21,8 @@ class PinDialog(tk.Toplevel):
         initial = initial or {}
 
         self._name_var = tk.StringVar(value=initial.get("name", ""))
-        self._port_var = tk.StringVar(value=initial.get("port", "A"))
+        ports = ports or ["A", "B", "C", "D", "E", "F", "G", "H"]
+        self._port_var = tk.StringVar(value=initial.get("port", ports[0]))
         self._pin_var = tk.StringVar(value=str(initial.get("pin", 0)))
         self._mode_var = tk.StringVar(value=initial.get("mode", "output"))
         self._pull_var = tk.StringVar(value=initial.get("pull", "none"))
@@ -35,7 +41,7 @@ class PinDialog(tk.Toplevel):
                 form,
                 textvariable=self._port_var,
                 state="readonly",
-                values=["A", "B", "C", "D", "E", "F", "G", "H"],
+                values=ports,
                 width=6,
             ),
         )
@@ -192,7 +198,7 @@ class PinConfigView(ttk.LabelFrame):
         return self._led_name_var.get().strip()
 
     def _add_pin(self) -> None:
-        dialog = PinDialog(self)
+        dialog = PinDialog(self, ports=self._ports)
         if not dialog.result:
             return
         self._insert_pin(dialog.result)
@@ -215,6 +221,7 @@ class PinConfigView(ttk.LabelFrame):
                 "initial": initial,
                 "active_high": active == "high",
             },
+            ports=self._ports,
         )
         if not dialog.result:
             return
@@ -279,7 +286,7 @@ class PinConfigView(ttk.LabelFrame):
         return pins
 
     def set_ports(self, ports: list[str]) -> None:
-        self._ports = ports
+        self._ports = [str(port).upper() for port in ports]
 
     def _insert_pin(self, data: dict) -> None:
         values = (
