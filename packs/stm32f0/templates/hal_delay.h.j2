@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+/* Approximate millisecond delay based on the pack system clock. */
 void hal_delay_ms(uint32_t ms);
 
 static inline void delay(uint32_t ms)

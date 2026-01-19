@@ -23,6 +23,13 @@ class BoardSelect(ttk.Frame):
         if names:
             self._combo.current(0)
 
+    def select_id(self, board_id: str) -> bool:
+        for idx, board in enumerate(self._boards):
+            if board.id == board_id:
+                self._combo.current(idx)
+                return True
+        return False
+
     def get_selected_id(self) -> str:
         idx = self._combo.current()
         if idx < 0 or idx >= len(self._boards):

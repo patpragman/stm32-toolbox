@@ -45,6 +45,7 @@ class ToolboxApp(tk.Tk):
 
         self._current_project_dir: Path | None = None
         self._build_system_var = tk.StringVar()
+        self._active_board_id: str | None = None
 
         self._build_ui()
         self._refresh_ports()
@@ -63,6 +64,8 @@ class ToolboxApp(tk.Tk):
         self.board_select = BoardSelect(left, on_change=self._on_board_change)
         self.board_select.pack(fill=tk.X, pady=(0, 12))
         self.board_select.set_boards(self.board_lib.list())
+        if self.settings.last_board_id:
+            self.board_select.select_id(self.settings.last_board_id)
 
         self.project_wizard = ProjectWizard(left, on_generate=self._generate_project)
         self.project_wizard.pack(fill=tk.X, pady=(0, 12))
@@ -125,6 +128,7 @@ class ToolboxApp(tk.Tk):
             board, _pack = self._get_selected_board_pack()
         except Exception:
             return
+        board_changed = board.id != self._active_board_id
         self.pin_config.set_board_led(
             board.led.name,
             board.led.port,
@@ -132,8 +136,13 @@ class ToolboxApp(tk.Tk):
             board.led.active_high,
         )
         self.pin_config.set_ports(_pack.gpio_ports)
-        if not self.pin_config.get_pins():
+        if board_changed or not self.pin_config.get_pins():
             self.pin_config.populate_all()
+        if board_changed:
+            self._active_board_id = board.id
+        if board.id and board.id != self.settings.last_board_id:
+            self.settings.last_board_id = board.id
+            save_settings(self.settings)
 
     def _on_build_system_change(self, _event=None) -> None:
         self.settings.build_system = self._build_system_var.get()

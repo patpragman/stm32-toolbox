@@ -60,7 +60,12 @@ void app_pin_toggle(app_pin_id_t id)
         return;
     }
     const app_pin_def_t *pin = &k_pins[id];
-    hal_gpio_toggle(pin->port, pin->pin);
+    bool level = hal_gpio_read(pin->port, pin->pin);
+    if (!pin->active_high)
+    {
+        level = !level;
+    }
+    app_pin_write(id, !level);
 }
 
 bool app_pin_read(app_pin_id_t id)

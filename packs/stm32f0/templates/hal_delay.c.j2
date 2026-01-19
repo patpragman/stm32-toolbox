@@ -1,14 +1,23 @@
 #include "hal_delay.h"
 
-#define SYST_CSR (*(volatile uint32_t *)0xE000E010U)
-#define SYST_CSR_COUNTFLAG (1U << 16)
+static inline void delay_cycles(volatile uint32_t cycles)
+{
+    while (cycles--)
+    {
+        __asm__ volatile("nop");
+    }
+}
 
 void hal_delay_ms(uint32_t ms)
 {
-    for (uint32_t i = 0; i < ms; i++)
+    uint32_t cycles_per_ms = {{ system_clock_hz }}U / 4000U;
+    if (cycles_per_ms == 0U)
     {
-        while ((SYST_CSR & SYST_CSR_COUNTFLAG) == 0U)
-        {
-        }
+        cycles_per_ms = 1U;
+    }
+
+    while (ms--)
+    {
+        delay_cycles(cycles_per_ms);
     }
 }

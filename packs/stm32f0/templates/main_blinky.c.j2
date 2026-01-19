@@ -21,7 +21,9 @@ int main(void)
 
     while (1)
     {
-        app_pin_toggle({{ led_enum_name }});
+        app_pin_write({{ led_enum_name }}, true);
+        hal_delay_ms(300);
+        app_pin_write({{ led_enum_name }}, false);
         hal_delay_ms(300);
     }
 }
