@@ -25,6 +25,21 @@ class LedDefinition:
 
 
 @dataclass(frozen=True)
+class SerialPinDefinition:
+    port: str
+    pin: int
+    af: int
+
+
+@dataclass(frozen=True)
+class SerialDefinition:
+    usart: str
+    tx: SerialPinDefinition
+    rx: SerialPinDefinition
+    baud: int = 115200
+
+
+@dataclass(frozen=True)
 class OpenOCDBoardConfig:
     interface_cfg: str
     transport: str = "swd"
@@ -41,6 +56,7 @@ class BoardDefinition:
     flash: MemoryRegion
     ram: MemoryRegion
     led: LedDefinition
+    serial: SerialDefinition | None
     openocd: OpenOCDBoardConfig
     gpio_ports: list[str] | None
     root: Path
@@ -76,6 +92,23 @@ class BoardLibrary:
                 pin=int(data["led"]["pin"]),
                 active_high=bool(data["led"].get("active_high", True)),
             )
+            serial = None
+            if data.get("serial"):
+                serial_data = data["serial"]
+                serial = SerialDefinition(
+                    usart=str(serial_data["usart"]).upper(),
+                    baud=int(serial_data.get("baud", 115200)),
+                    tx=SerialPinDefinition(
+                        port=str(serial_data["tx"]["port"]).upper(),
+                        pin=int(serial_data["tx"]["pin"]),
+                        af=int(serial_data["tx"]["af"]),
+                    ),
+                    rx=SerialPinDefinition(
+                        port=str(serial_data["rx"]["port"]).upper(),
+                        pin=int(serial_data["rx"]["pin"]),
+                        af=int(serial_data["rx"]["af"]),
+                    ),
+                )
             openocd = OpenOCDBoardConfig(
                 interface_cfg=data["openocd"]["interface_cfg"],
                 transport=data["openocd"].get("transport", "swd"),
@@ -94,6 +127,7 @@ class BoardLibrary:
                 flash=flash,
                 ram=ram,
                 led=led,
+                serial=serial,
                 openocd=openocd,
                 gpio_ports=gpio_ports,
                 root=board_path.parent,

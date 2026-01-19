@@ -1,0 +1,156 @@
+#include "hal_uart.h"
+
+{% if serial_enabled %}
+#define RCC_BASE 0x40021000U
+#define RCC_AHBENR_OFFSET 0x14U
+#define RCC_APB1ENR_OFFSET 0x1CU
+#define RCC_APB2ENR_OFFSET 0x18U
+#define RCC_AHBENR (*(volatile uint32_t *)(RCC_BASE + RCC_AHBENR_OFFSET))
+#define RCC_APB1ENR (*(volatile uint32_t *)(RCC_BASE + RCC_APB1ENR_OFFSET))
+#define RCC_APB2ENR (*(volatile uint32_t *)(RCC_BASE + RCC_APB2ENR_OFFSET))
+
+#define GPIO_MODER_OFFSET 0x00U
+#define GPIO_AFRL_OFFSET 0x20U
+#define GPIO_AFRH_OFFSET 0x24U
+
+#define USART_CR1_OFFSET 0x00U
+#define USART_BRR_OFFSET 0x0CU
+#define USART_ISR_OFFSET 0x1CU
+#define USART_TDR_OFFSET 0x28U
+
+#define USART_CR1_UE (1U << 0)
+#define USART_CR1_RE (1U << 2)
+#define USART_CR1_TE (1U << 3)
+#define USART_ISR_TXE (1U << 7)
+
+{% set gpio_base = {
+  "A": "0x48000000",
+  "B": "0x48000400",
+  "C": "0x48000800",
+  "D": "0x48000C00",
+  "E": "0x48001000",
+  "F": "0x48001400"
+} %}
+{% set rcc_bit = {
+  "A": 17,
+  "B": 18,
+  "C": 19,
+  "D": 20,
+  "E": 21,
+  "F": 22
+} %}
+{% set usart_base = {
+  "USART1": "0x40013800",
+  "USART2": "0x40004400",
+  "USART3": "0x40004800"
+} %}
+{% set usart_bus = {
+  "USART1": "APB2",
+  "USART2": "APB1",
+  "USART3": "APB1"
+} %}
+{% set usart_en_bit = {
+  "USART1": 14,
+  "USART2": 17,
+  "USART3": 18
+} %}
+
+#define UART_GPIO_TX_BASE {{ gpio_base[serial.tx.port] }}U
+#define UART_GPIO_RX_BASE {{ gpio_base[serial.rx.port] }}U
+#define UART_TX_PIN {{ serial.tx.pin }}U
+#define UART_RX_PIN {{ serial.rx.pin }}U
+#define UART_TX_AF {{ serial.tx.af }}U
+#define UART_RX_AF {{ serial.rx.af }}U
+
+#define UART_USART_BASE {{ usart_base[serial.usart] }}U
+#define UART_USART_CR1 (*(volatile uint32_t *)(UART_USART_BASE + USART_CR1_OFFSET))
+#define UART_USART_BRR (*(volatile uint32_t *)(UART_USART_BASE + USART_BRR_OFFSET))
+#define UART_USART_ISR (*(volatile uint32_t *)(UART_USART_BASE + USART_ISR_OFFSET))
+#define UART_USART_TDR (*(volatile uint32_t *)(UART_USART_BASE + USART_TDR_OFFSET))
+
+static void gpio_enable_port(uint32_t bit)
+{
+    RCC_AHBENR |= (1U << bit);
+}
+
+static void gpio_set_af(uint32_t base, uint8_t pin, uint8_t af)
+{
+    volatile uint32_t *moder = (volatile uint32_t *)(base + GPIO_MODER_OFFSET);
+    volatile uint32_t *afr = (volatile uint32_t *)(
+        base + (pin < 8U ? GPIO_AFRL_OFFSET : GPIO_AFRH_OFFSET));
+    uint32_t shift = (uint32_t)(pin % 8U) * 4U;
+    uint32_t reg = *afr;
+    reg &= ~(0xFU << shift);
+    reg |= ((uint32_t)af << shift);
+    *afr = reg;
+
+    reg = *moder;
+    reg &= ~(3U << (pin * 2U));
+    reg |= (2U << (pin * 2U));
+    *moder = reg;
+}
+
+static void usart_enable_clock(void)
+{
+{% if usart_bus[serial.usart] == "APB2" %}
+    RCC_APB2ENR |= (1U << {{ usart_en_bit[serial.usart] }});
+{% else %}
+    RCC_APB1ENR |= (1U << {{ usart_en_bit[serial.usart] }});
+{% endif %}
+}
+
+void hal_uart_init(uint32_t baud)
+{
+    if (baud == 0U)
+    {
+        baud = 115200U;
+    }
+
+    gpio_enable_port({{ rcc_bit[serial.tx.port] }});
+    gpio_enable_port({{ rcc_bit[serial.rx.port] }});
+
+    gpio_set_af(UART_GPIO_TX_BASE, UART_TX_PIN, UART_TX_AF);
+    gpio_set_af(UART_GPIO_RX_BASE, UART_RX_PIN, UART_RX_AF);
+
+    usart_enable_clock();
+
+    UART_USART_CR1 = 0U;
+    UART_USART_BRR = ({{ system_clock_hz }}U + (baud / 2U)) / baud;
+    UART_USART_CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
+}
+
+void hal_uart_write_byte(uint8_t byte)
+{
+    while ((UART_USART_ISR & USART_ISR_TXE) == 0U)
+    {
+    }
+    UART_USART_TDR = byte;
+}
+
+void hal_uart_write(const char *text)
+{
+    if (!text)
+    {
+        return;
+    }
+    while (*text)
+    {
+        hal_uart_write_byte((uint8_t)*text++);
+    }
+}
+{% else %}
+void hal_uart_init(uint32_t baud)
+{
+    (void)baud;
+}
+
+void hal_uart_write_byte(uint8_t byte)
+{
+    (void)byte;
+}
+
+void hal_uart_write(const char *text)
+{
+    (void)text;
+}
+{% endif %}

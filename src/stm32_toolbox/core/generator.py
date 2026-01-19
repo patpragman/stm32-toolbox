@@ -68,6 +68,8 @@ class ProjectGenerator:
         self._render(env, pack.templates.hal_clock_c, "hal_clock.c", context)
         self._render(env, pack.templates.hal_delay_h, "hal_delay.h", context)
         self._render(env, pack.templates.hal_delay_c, "hal_delay.c", context)
+        self._render(env, pack.templates.hal_uart_h, "hal_uart.h", context)
+        self._render(env, pack.templates.hal_uart_c, "hal_uart.c", context)
         self._render(env, pack.templates.app_pins_h, "app_pins.h", context)
         self._render(env, pack.templates.app_pins_c, "app_pins.c", context)
 
@@ -153,10 +155,15 @@ class ProjectGenerator:
             ]
             if part
         )
+        serial = asdict(board.serial) if board.serial else None
+        serial_baud = board.serial.baud if board.serial else 115200
 
         return {
             "board": asdict(board),
             "pack": asdict(pack),
+            "serial": serial,
+            "serial_enabled": bool(serial),
+            "serial_baud": serial_baud,
             "flash_origin": f"0x{board.flash.origin:08X}",
             "flash_length": f"0x{board.flash.length:X}",
             "ram_origin": f"0x{board.ram.origin:08X}",

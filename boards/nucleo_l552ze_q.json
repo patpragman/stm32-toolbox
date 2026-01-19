@@ -20,6 +20,12 @@
     "active_high": true
   },
   "gpio_ports": ["A", "B", "C", "D", "E", "F", "G", "H"],
+  "serial": {
+    "usart": "USART3",
+    "baud": 115200,
+    "tx": { "port": "D", "pin": 8, "af": 7 },
+    "rx": { "port": "D", "pin": 9, "af": 7 }
+  },
   "openocd": {
     "interface_cfg": "interface/stlink.cfg",
     "transport": "auto",

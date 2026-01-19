@@ -18,6 +18,8 @@ int main(void)
 {
     hal_clock_init();
     app_pins_init();
+    hal_uart_init({{ serial_baud }}U);
+    hal_uart_write("stm32-toolbox boot\\r\\n");
 
     while (1)
     {
@@ -25,5 +27,6 @@ int main(void)
         hal_delay_ms(300);
         app_pin_write({{ led_enum_name }}, false);
         hal_delay_ms(300);
+        hal_uart_write("tick\\r\\n");
     }
 }

@@ -26,6 +26,8 @@ class PackTemplates:
     hal_clock_c: str
     hal_delay_h: str
     hal_delay_c: str
+    hal_uart_h: str
+    hal_uart_c: str
     app_pins_h: str
     app_pins_c: str
 
@@ -86,6 +88,8 @@ class PackLibrary:
                 hal_clock_c=data["templates"]["hal_clock_c"],
                 hal_delay_h=data["templates"]["hal_delay_h"],
                 hal_delay_c=data["templates"]["hal_delay_c"],
+                hal_uart_h=data["templates"]["hal_uart_h"],
+                hal_uart_c=data["templates"]["hal_uart_c"],
                 app_pins_h=data["templates"]["app_pins_h"],
                 app_pins_c=data["templates"]["app_pins_c"],
             )

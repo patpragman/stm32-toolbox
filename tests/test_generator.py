@@ -32,6 +32,8 @@ class GeneratorTests(unittest.TestCase):
             self.assertTrue((output_dir / "hal_clock.h").exists())
             self.assertTrue((output_dir / "hal_delay.c").exists())
             self.assertTrue((output_dir / "hal_delay.h").exists())
+            self.assertTrue((output_dir / "hal_uart.c").exists())
+            self.assertTrue((output_dir / "hal_uart.h").exists())
             self.assertTrue((output_dir / "app_pins.c").exists())
             self.assertTrue((output_dir / "app_pins.h").exists())
             self.assertTrue((output_dir / "openocd" / "target.cfg").exists())
@@ -83,6 +85,7 @@ class GeneratorTests(unittest.TestCase):
 
             main_c = (output_dir / "main.c").read_text(encoding="utf-8")
             self.assertIn("APP_PIN_LD2", main_c)
+            self.assertIn("hal_uart_init", main_c)
 
 
 if __name__ == "__main__":
