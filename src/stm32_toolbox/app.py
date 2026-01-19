@@ -29,6 +29,7 @@ from .ui.log_view import LogView
 from .ui.serial_view import SerialView
 from .ui.tool_status import ToolStatusView
 from .ui.pin_config import PinConfigView
+from .ui.code_editor import CodeEditorView
 
 
 class ToolboxApp(tk.Tk):
@@ -91,15 +92,20 @@ class ToolboxApp(tk.Tk):
         self.tool_status = ToolStatusView(left, on_refresh=self._refresh_tools)
         self.tool_status.pack(fill=tk.X, pady=(12, 0))
 
+        self._notebook = ttk.Notebook(right)
+        self._notebook.pack(fill=tk.BOTH, expand=True)
+
         self.serial_view = SerialView(
-            right,
+            self._notebook,
             on_start=self._start_serial,
             on_stop=self._stop_serial,
         )
-        self.serial_view.pack(fill=tk.BOTH, expand=True)
+        self.log_view = LogView(self._notebook)
+        self.code_editor = CodeEditorView(self._notebook)
 
-        self.log_view = LogView(right)
-        self.log_view.pack(fill=tk.BOTH, expand=True, pady=(12, 0))
+        self._notebook.add(self.serial_view, text="Serial Monitor")
+        self._notebook.add(self.log_view, text="Log")
+        self._notebook.add(self.code_editor, text="main.c Editor")
 
     def _log(self, line: str) -> None:
         self.after(0, lambda: self.log_view.append(line))
@@ -146,6 +152,7 @@ class ToolboxApp(tk.Tk):
                 generator = ProjectGenerator(self._current_project_dir)
                 generator.generate(board, pack, pins=pins, led_alias=led_alias)
                 self._log(f"Generated project at {self._current_project_dir}")
+                self.after(0, self._load_main_editor)
                 self.settings.last_project_dir = str(self._current_project_dir)
                 self.settings.last_board_id = board.id
                 save_settings(self.settings)
@@ -161,8 +168,13 @@ class ToolboxApp(tk.Tk):
             project_dir = self.project_wizard.get_project_dir()
             if project_dir:
                 self._current_project_dir = Path(project_dir)
+                self.after(0, self._load_main_editor)
         if not self._current_project_dir:
             messagebox.showerror("Missing project", "Generate or select a project first.")
+            return
+        if not self._load_main_editor():
+            return
+        if not self.code_editor.save_if_dirty():
             return
 
         def work():
@@ -189,6 +201,10 @@ class ToolboxApp(tk.Tk):
     def _flash_project(self) -> None:
         if not self._current_project_dir:
             messagebox.showerror("Missing project", "Generate or select a project first.")
+            return
+        if not self._load_main_editor():
+            return
+        if not self.code_editor.save_if_dirty():
             return
 
         def work():
@@ -260,6 +276,18 @@ class ToolboxApp(tk.Tk):
         self.serial_view.set_ports(devices)
         if self.settings.last_serial_port in devices:
             self.serial_view.select_port(self.settings.last_serial_port)
+
+    def _load_main_editor(self) -> bool:
+        if not self._current_project_dir:
+            return False
+        main_path = self._current_project_dir / "main.c"
+        if not main_path.exists():
+            return False
+        if self.code_editor.has_unsaved_changes():
+            return True
+        if self.code_editor.get_path() != main_path:
+            self.code_editor.load_file(main_path)
+        return True
 
     @staticmethod
     def _find_elf(build_dir: Path) -> Path | None:
