@@ -1,0 +1,45 @@
+cmake_minimum_required(VERSION 3.20)
+
+if(NOT CMAKE_TOOLCHAIN_FILE)
+  set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_LIST_DIR}/cmake/toolchain-arm-none-eabi.cmake" CACHE FILEPATH "" FORCE)
+endif()
+
+project({{ board.id }} C ASM)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_C_STANDARD 11)
+
+set(LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/linker.ld)
+
+add_executable(${PROJECT_NAME}.elf
+  main.c
+  system.c
+  startup_gcc.s
+)
+
+target_include_directories(${PROJECT_NAME}.elf PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+
+target_compile_options(${PROJECT_NAME}.elf PRIVATE
+  -mcpu={{ pack.cpu }}
+  -mthumb
+  -ffreestanding
+  -fno-builtin
+  -fdata-sections
+  -ffunction-sections
+)
+
+target_link_options(${PROJECT_NAME}.elf PRIVATE
+  -mcpu={{ pack.cpu }}
+  -mthumb
+  -T${LINKER_SCRIPT}
+  -Wl,--gc-sections
+  -Wl,-Map=${PROJECT_NAME}.map
+  -nostartfiles
+)
+
+add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
+  COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${PROJECT_NAME}.elf> ${PROJECT_NAME}.hex
+  COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${PROJECT_NAME}.elf> ${PROJECT_NAME}.bin
+  COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${PROJECT_NAME}.elf>
+  BYPRODUCTS ${PROJECT_NAME}.hex ${PROJECT_NAME}.bin
+)

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stm32-toolbox"
+version = "0.1.0"
+description = "Linux-first STM32 project generator, builder, flasher, and serial monitor."
+readme = "README.md"
+requires-python = ">=3.14"
+license = { text = "MIT" }
+authors = [{ name = "stm32-toolbox contributors" }]
+keywords = ["stm32", "embedded", "openocd", "cmake", "ninja"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: X11 Applications",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Embedded Systems",
+]
+dependencies = [
+  "jinja2>=3.1",
+  "pyserial>=3.5",
+]
+
+[project.scripts]
+stm32-toolbox = "stm32_toolbox.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

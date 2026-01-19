@@ -1,0 +1,21 @@
+{
+  "id": "stm32f0",
+  "name": "STM32F0",
+  "cpu": "cortex-m0",
+  "cmsis": {
+    "strategy": "cube_root"
+  },
+  "templates": {
+    "cmakelists": "CMakeLists.txt.j2",
+    "linker": "linker.ld.j2",
+    "system": "system.c.j2",
+    "main": "main_blinky.c.j2",
+    "family_gpio": "family_gpio.j2",
+    "startup": "startup_gcc.s"
+  },
+  "openocd": {
+    "target_cfg": "openocd/target.cfg",
+    "transport": "swd",
+    "speed_khz": 4000
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "nucleo_l552ze_q",
+  "name": "NUCLEO-L552ZE-Q",
+  "pack": "stm32l5",
+  "mcu": "STM32L552ZE",
+  "memory": {
+    "flash": {
+      "origin": "0x08000000",
+      "length": "0x00080000"
+    },
+    "ram": {
+      "origin": "0x20000000",
+      "length": "0x00040000"
+    }
+  },
+  "led": {
+    "port": "B",
+    "pin": 7,
+    "active_high": true
+  },
+  "openocd": {
+    "interface_cfg": "interface/stlink.cfg",
+    "transport": "swd",
+    "speed_khz": 4000
+  }
+}

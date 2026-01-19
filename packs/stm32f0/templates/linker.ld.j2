@@ -1,0 +1,40 @@
+ENTRY(Reset_Handler)
+
+MEMORY
+{
+  FLASH (rx) : ORIGIN = {{ flash_origin }}, LENGTH = {{ flash_length }}
+  RAM (rwx)  : ORIGIN = {{ ram_origin }}, LENGTH = {{ ram_length }}
+}
+
+SECTIONS
+{
+  .isr_vector :
+  {
+    KEEP(*(.isr_vector))
+  } > FLASH
+
+  .text :
+  {
+    *(.text*)
+    *(.rodata*)
+  } > FLASH
+
+  .data : AT (ADDR(.text) + SIZEOF(.text))
+  {
+    __sdata = .;
+    *(.data*)
+    __edata = .;
+  } > RAM
+
+  .bss :
+  {
+    __sbss = .;
+    *(.bss*)
+    *(COMMON)
+    __ebss = .;
+  } > RAM
+
+  __end = .;
+  __StackTop = ORIGIN(RAM) + LENGTH(RAM);
+  __sidata = LOADADDR(.data);
+}

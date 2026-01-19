@@ -1,0 +1,26 @@
+{
+  "id": "nucleo_f091rc",
+  "name": "NUCLEO-F091RC",
+  "pack": "stm32f0",
+  "mcu": "STM32F091RC",
+  "memory": {
+    "flash": {
+      "origin": "0x08000000",
+      "length": "0x00040000"
+    },
+    "ram": {
+      "origin": "0x20000000",
+      "length": "0x00008000"
+    }
+  },
+  "led": {
+    "port": "A",
+    "pin": 5,
+    "active_high": true
+  },
+  "openocd": {
+    "interface_cfg": "interface/stlink.cfg",
+    "transport": "swd",
+    "speed_khz": 4000
+  }
+}
