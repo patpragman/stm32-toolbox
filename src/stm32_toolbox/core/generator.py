@@ -186,22 +186,18 @@ class ProjectGenerator:
         pins: list[dict],
         led_alias: str | None,
     ) -> list[dict]:
-        normalized = []
-        names = set()
+        normalized: list[dict] = []
+        name_to_index: dict[str, int] = {}
         locations = set()
         led_location = (board.led.port, board.led.pin)
         led_alias = (led_alias or board.led.name or "LED").strip() or "LED"
-        led_entry_index: int | None = None
 
-        def add_pin(entry: dict) -> None:
+        def add_pin(entry: dict) -> int:
             name = entry.get("name", "").strip()
             if not name:
                 raise GenerationError("Pin name is required.")
             safe = ProjectGenerator._to_identifier(name)
             enum_name = f"APP_PIN_{safe}"
-            if enum_name in names:
-                raise GenerationError(f"Duplicate pin name: {name}")
-            names.add(enum_name)
 
             port = str(entry.get("port", "")).upper()
             if port not in {"A", "B", "C", "D", "E", "F", "G", "H"}:
@@ -231,6 +227,17 @@ class ProjectGenerator:
             locations.add(location)
 
             is_led = location == led_location
+
+            if enum_name in name_to_index:
+                if is_led:
+                    conflict_index = name_to_index[enum_name]
+                    new_enum = ProjectGenerator._unique_enum(enum_name, name_to_index)
+                    normalized[conflict_index]["enum_name"] = new_enum
+                    name_to_index[new_enum] = conflict_index
+                    name_to_index.pop(enum_name, None)
+                else:
+                    enum_name = ProjectGenerator._unique_enum(enum_name, name_to_index)
+
             entry = {
                 "name": name,
                 "enum_name": enum_name,
@@ -255,10 +262,17 @@ class ProjectGenerator:
                 "is_led": is_led,
             }
             normalized.append(entry)
-            if entry["is_led"]:
-                led_entry_index = len(normalized) - 1
+            name_to_index[enum_name] = len(normalized) - 1
+            return len(normalized) - 1
 
-        if led_entry_index is None:
+        for entry in pins:
+            add_pin(entry)
+
+        led_index = next(
+            (idx for idx, pin in enumerate(normalized) if pin.get("is_led")), None
+        )
+
+        if led_index is None:
             add_pin(
                 {
                     "name": led_alias,
@@ -271,11 +285,18 @@ class ProjectGenerator:
                 }
             )
         else:
-            normalized[led_entry_index]["name"] = led_alias
-            normalized[led_entry_index]["enum_name"] = f"APP_PIN_{ProjectGenerator._to_identifier(led_alias)}"
-
-        for entry in pins:
-            add_pin(entry)
+            desired_enum = f"APP_PIN_{ProjectGenerator._to_identifier(led_alias)}"
+            current_enum = normalized[led_index]["enum_name"]
+            if desired_enum != current_enum:
+                if desired_enum in name_to_index and name_to_index[desired_enum] != led_index:
+                    conflict_index = name_to_index[desired_enum]
+                    new_enum = ProjectGenerator._unique_enum(desired_enum, name_to_index)
+                    normalized[conflict_index]["enum_name"] = new_enum
+                    name_to_index[new_enum] = conflict_index
+                name_to_index.pop(current_enum, None)
+                normalized[led_index]["enum_name"] = desired_enum
+                name_to_index[desired_enum] = led_index
+            normalized[led_index]["name"] = led_alias
 
         return normalized
 
@@ -293,3 +314,12 @@ class ProjectGenerator:
         if name[0].isdigit():
             name = f"PIN_{name}"
         return name
+
+    @staticmethod
+    def _unique_enum(base: str, existing: dict[str, int]) -> str:
+        counter = 2
+        candidate = f"{base}_{counter}"
+        while candidate in existing:
+            counter += 1
+            candidate = f"{base}_{counter}"
+        return candidate
