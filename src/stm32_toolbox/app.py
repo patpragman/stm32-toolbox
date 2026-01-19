@@ -186,11 +186,7 @@ class ToolboxApp(tk.Tk):
             try:
                 status = detect_tools()
                 build_system = self._get_build_system()
-                require_build_tools(
-                    status,
-                    build_system,
-                    needs_cmake=self._is_toolbox_project(),
-                )
+                require_build_tools(status, build_system)
                 config = BuildConfig(
                     source_dir=self._current_project_dir,
                     build_dir=self._current_project_dir / "build",

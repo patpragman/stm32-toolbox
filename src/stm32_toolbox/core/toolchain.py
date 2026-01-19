@@ -44,16 +44,9 @@ def require_tools(status: ToolchainStatus, required: tuple[str, ...]) -> None:
         raise ToolNotFoundError(", ".join(missing))
 
 
-def require_build_tools(
-    status: ToolchainStatus,
-    build_system: str,
-    needs_cmake: bool = False,
-) -> None:
+def require_build_tools(status: ToolchainStatus, build_system: str) -> None:
     if build_system == BUILD_SYSTEM_MAKE:
-        required = ["make", "arm_none_eabi_gcc", "arm_none_eabi_objcopy"]
-        if needs_cmake:
-            required.extend(["cmake", "ninja"])
-        require_tools(status, tuple(required))
+        require_tools(status, ("make", "arm_none_eabi_gcc", "arm_none_eabi_objcopy"))
         return
     require_tools(status, ("arm_none_eabi_gcc", "arm_none_eabi_objcopy", "cmake", "ninja"))
 

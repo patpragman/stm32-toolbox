@@ -35,6 +35,10 @@ class GeneratorTests(unittest.TestCase):
             self.assertTrue((output_dir / "app_pins.c").exists())
             self.assertTrue((output_dir / "app_pins.h").exists())
             self.assertTrue((output_dir / "openocd" / "target.cfg").exists())
+
+            makefile = (output_dir / "Makefile").read_text(encoding="utf-8")
+            self.assertIn("arm-none-eabi-gcc", makefile)
+            self.assertIn("flash:", makefile)
             self.assertTrue((output_dir / "stm32toolbox.project.json").exists())
 
             manifest = json.loads((output_dir / "stm32toolbox.project.json").read_text(encoding="utf-8"))
