@@ -17,9 +17,11 @@
 int main(void)
 {
     hal_clock_init();
-    app_pins_init();
     hal_uart_init({{ serial_baud }}U);
     hal_uart_write("stm32-toolbox boot\\r\\n");
+    app_pins_init();
+    hal_uart_init({{ serial_baud }}U);
+    hal_uart_write("pins init ok\\r\\n");
 
     while (1)
     {

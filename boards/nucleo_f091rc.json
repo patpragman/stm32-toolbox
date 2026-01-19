@@ -19,7 +19,7 @@
     "pin": 5,
     "active_high": true
   },
-  "gpio_ports": ["A", "B", "C", "D", "F"],
+  "gpio_ports": ["A", "B", "C"],
   "serial": {
     "usart": "USART2",
     "baud": 115200,
