@@ -63,7 +63,6 @@ class ToolboxApp(tk.Tk):
         self.board_select = BoardSelect(left, on_change=self._on_board_change)
         self.board_select.pack(fill=tk.X, pady=(0, 12))
         self.board_select.set_boards(self.board_lib.list())
-        self._on_board_change()
 
         self.project_wizard = ProjectWizard(left, on_generate=self._generate_project)
         self.project_wizard.pack(fill=tk.X, pady=(0, 12))
@@ -72,6 +71,7 @@ class ToolboxApp(tk.Tk):
 
         self.pin_config = PinConfigView(left)
         self.pin_config.pack(fill=tk.X, pady=(0, 12))
+        self._on_board_change()
 
         actions = ttk.LabelFrame(left, text="Actions", padding=8)
         actions.pack(fill=tk.X)
