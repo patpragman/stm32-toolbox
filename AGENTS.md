@@ -1,38 +1,40 @@
 # Repository Guidelines
 
-This repository is currently a scaffolding for STM32 tooling and drivers. Use the
-conventions below to keep new modules consistent and update this file when the
-structure or tooling changes.
+This repository contains stm32-toolbox, a Linux-first Tkinter desktop app for
+STM32 project generation, build, flash, and serial monitoring. The system is
+pack- and board-driven: adding a new board should be data-only.
 
 ## Project Structure & Module Organization
-Place reusable code under `src/` with public headers in `include/`. Add
-board-specific configuration in `boards/<board_name>/` (pins, clocks, linker
-scripts). Put runnable demos in `examples/` and supporting scripts in `tools/`.
-Tests live in `tests/`, and design notes belong in `docs/`. Keep each module
-self-contained, for example `src/gpio/` with `include/gpio.h`.
+- `src/stm32_toolbox/` holds the application code. UI modules live in
+  `src/stm32_toolbox/ui/`, core subsystems in `src/stm32_toolbox/core/`, and
+  persisted settings in `src/stm32_toolbox/state.py`.
+- `boards/` contains board JSON definitions (for example
+  `boards/nucleo_l552ze_q.json`).
+- `packs/` contains family packs (for example `packs/stm32l5/`) with templates
+  under `templates/` and OpenOCD defaults under `openocd/`.
+- `tests/` contains unit tests (currently `tests/test_loaders.py`).
 
 ## Build, Test, and Development Commands
-A build system is not checked in yet. When adding one, keep a single entrypoint
-and document it here. Expected defaults:
-- `cmake -S . -B build` - configure.
-- `cmake --build build` - build all targets.
-- `ctest --test-dir build` - run unit tests.
-If you choose Make instead of CMake, provide equivalent `make build`, `make test`,
-and `make flash BOARD=<board>` targets.
+- `python3.14 -m venv .venv` - create the local virtual environment.
+- `source .venv/bin/activate` - activate the venv.
+- `pip install -e .` - install in editable mode.
+- `stm32-toolbox` - launch the GUI.
+- `python -m unittest` - run unit tests.
+
+Generated projects build with:
+- `cmake -S . -B build -G Ninja`
+- `cmake --build build`
 
 ## Coding Style & Naming Conventions
-Use 4-space indentation, LF line endings, and no tabs. For C/C++ code, use K&R
-braces, `snake_case` for functions/variables, `snake_case_t` for typedefs, and
-`UPPER_SNAKE_CASE` for macros/constants. File names should be
-`lower_snake_case.c/.h`.
+- Python: 4-space indentation, `snake_case` functions/variables, `CamelCase`
+  classes, and ASCII-only source files.
+- C templates: K&R braces, `snake_case` functions, `UPPER_SNAKE_CASE` macros.
 
 ## Testing Guidelines
-Default to Unity and Ceedling for C tests unless the project adopts another
-framework. Name tests `tests/test_<module>.c` and cover new drivers or utilities
-with at least one unit test plus a runnable example under `examples/`.
+- Use `unittest` for core logic tests; place tests in `tests/test_*.py`.
+- Prefer small loader and template rendering tests for packs/boards.
 
 ## Commit & Pull Request Guidelines
-There is no Git history yet. Use Conventional Commits (for example,
-`feat: add gpio driver`, `fix: guard null pointer`). PRs should include a short
-summary, test commands run, target board(s), and linked issues. Add screenshots
-only for documentation or UI changes.
+- Use Conventional Commits (for example, `feat: add board definition`).
+- PRs should include a short summary, tests run, and the board(s) validated.
+- Attach logs or screenshots only when they add diagnostic value.
