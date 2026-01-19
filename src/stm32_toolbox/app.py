@@ -175,6 +175,15 @@ class ToolboxApp(tk.Tk):
                 generator = ProjectGenerator(self._current_project_dir)
                 generator.generate(board, pack, pins=pins, led_alias=led_alias)
                 self._log(f"Generated project at {self._current_project_dir}")
+                self._log(
+                    "Board: {} ({}) | CPU: {} | LED: P{}{}".format(
+                        board.name,
+                        board.id,
+                        pack.cpu,
+                        board.led.port,
+                        board.led.pin,
+                    )
+                )
                 self.after(0, self._load_main_editor)
                 self.settings.last_project_dir = str(self._current_project_dir)
                 self.settings.last_board_id = board.id

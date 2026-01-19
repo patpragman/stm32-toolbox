@@ -147,7 +147,9 @@ class ProjectGenerator:
                 f"adapter speed {openocd_speed}",
                 "init",
                 "reset init",
-                "program $(ELF) verify reset exit",
+                "program $(ELF) verify",
+                "reset run",
+                "exit",
             ]
             if part
         )

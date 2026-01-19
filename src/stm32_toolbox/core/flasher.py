@@ -43,7 +43,9 @@ class Flasher:
                 f"adapter speed {speed}",
                 "init",
                 "reset init",
-                f"program {elf_path} verify reset exit",
+                f"program {elf_path} verify",
+                "reset run",
+                "exit",
             ]
         )
         script = "; ".join(script_parts)
