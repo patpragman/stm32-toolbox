@@ -140,6 +140,7 @@ class PinConfigView(ttk.LabelFrame):
         self._led_name_var = tk.StringVar(value="LED")
         self._led_port: str | None = None
         self._led_pin: int | None = None
+        self._led_active_high: bool = True
         self._ports: list[str] = []
 
         self._led_label = ttk.Label(self, text="Board LED: -")
@@ -180,11 +181,12 @@ class PinConfigView(ttk.LabelFrame):
         )
         ttk.Button(buttons, text="Clear", command=self._clear_pins).pack(side=tk.LEFT)
 
-    def set_board_led(self, name: str, port: str, pin: int) -> None:
+    def set_board_led(self, name: str, port: str, pin: int, active_high: bool) -> None:
         self._led_label.configure(text=f"Board LED: {port}{pin}")
         self._led_name_var.set(name)
         self._led_port = port
         self._led_pin = pin
+        self._led_active_high = active_high
 
     def get_led_alias(self) -> str:
         return self._led_name_var.get().strip()
@@ -234,17 +236,18 @@ class PinConfigView(ttk.LabelFrame):
         for port in self._ports or []:
             for pin in range(16):
                 name = f"P{port}{pin}"
-                if port == self._led_port and pin == self._led_pin:
+                is_led = port == self._led_port and pin == self._led_pin
+                if is_led:
                     name = led_name
                 self._insert_pin(
                     {
                         "name": name,
                         "port": port,
                         "pin": pin,
-                        "mode": "input",
+                        "mode": "output" if is_led else "input",
                         "pull": "none",
                         "initial": "low",
-                        "active_high": True,
+                        "active_high": self._led_active_high if is_led else True,
                     }
                 )
         self._notify_change()

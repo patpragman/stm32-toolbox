@@ -53,6 +53,9 @@ class GeneratorTests(unittest.TestCase):
             app_pins = (output_dir / "app_pins.h").read_text(encoding="utf-8")
             self.assertTrue("APP_PIN_LED" in app_pins or "APP_PIN_LD2" in app_pins)
 
+            app_pins_c = (output_dir / "app_pins.c").read_text(encoding="utf-8")
+            self.assertIn("HAL_GPIO_MODE_OUTPUT", app_pins_c)
+
     def test_generate_project_with_custom_pins(self) -> None:
         board = BoardLibrary(Path("boards")).get("nucleo_f091rc")
         pack = PackLibrary(Path("packs")).get("stm32f0")

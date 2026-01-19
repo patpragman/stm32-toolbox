@@ -230,26 +230,29 @@ class ProjectGenerator:
                 raise GenerationError(f"Duplicate GPIO pin: P{port}{pin}")
             locations.add(location)
 
+            is_led = location == led_location
             entry = {
                 "name": name,
                 "enum_name": enum_name,
                 "port": port,
                 "pin": pin,
-                "mode": mode,
-                "pull": pull,
-                "initial": initial,
-                "active_high": active_high,
+                "mode": "output" if is_led else mode,
+                "pull": "none" if is_led else pull,
+                "initial": "low" if is_led else initial,
+                "active_high": board.led.active_high if is_led else active_high,
                 "port_enum": f"HAL_PORT_{port}",
                 "mode_enum": "HAL_GPIO_MODE_OUTPUT"
-                if mode == "output"
+                if (is_led or mode == "output")
                 else "HAL_GPIO_MODE_INPUT",
-                "pull_enum": {
+                "pull_enum": "HAL_GPIO_PULL_NONE"
+                if is_led
+                else {
                     "none": "HAL_GPIO_PULL_NONE",
                     "up": "HAL_GPIO_PULL_UP",
                     "down": "HAL_GPIO_PULL_DOWN",
                 }[pull],
-                "initial_high": initial == "high",
-                "is_led": location == led_location,
+                "initial_high": False if is_led else initial == "high",
+                "is_led": is_led,
             }
             normalized.append(entry)
             if entry["is_led"]:

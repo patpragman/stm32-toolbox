@@ -125,7 +125,12 @@ class ToolboxApp(tk.Tk):
             board, _pack = self._get_selected_board_pack()
         except Exception:
             return
-        self.pin_config.set_board_led(board.led.name, board.led.port, board.led.pin)
+        self.pin_config.set_board_led(
+            board.led.name,
+            board.led.port,
+            board.led.pin,
+            board.led.active_high,
+        )
         self.pin_config.set_ports(_pack.gpio_ports)
         if not self.pin_config.get_pins():
             self.pin_config.populate_all()
