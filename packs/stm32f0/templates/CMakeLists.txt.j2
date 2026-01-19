@@ -12,6 +12,10 @@ set(CMAKE_C_STANDARD 11)
 set(LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/linker.ld)
 
 add_executable(${PROJECT_NAME}.elf
+  app_pins.c
+  hal_clock.c
+  hal_delay.c
+  hal_gpio.c
   main.c
   system.c
   startup_gcc.s

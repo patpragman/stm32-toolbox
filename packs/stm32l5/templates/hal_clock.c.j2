@@ -1,0 +1,23 @@
+#include "hal_clock.h"
+
+extern uint32_t SystemCoreClock;
+
+#define SYST_CSR (*(volatile uint32_t *)0xE000E010U)
+#define SYST_RVR (*(volatile uint32_t *)0xE000E014U)
+#define SYST_CVR (*(volatile uint32_t *)0xE000E018U)
+
+#define SYST_CSR_ENABLE (1U << 0)
+#define SYST_CSR_CLKSOURCE (1U << 2)
+
+void hal_clock_init(void)
+{
+    SystemCoreClock = {{ system_clock_hz }}U;
+    SYST_RVR = (SystemCoreClock / 1000U) - 1U;
+    SYST_CVR = 0U;
+    SYST_CSR = SYST_CSR_ENABLE | SYST_CSR_CLKSOURCE;
+}
+
+uint32_t hal_clock_get_hz(void)
+{
+    return SystemCoreClock;
+}

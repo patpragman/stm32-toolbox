@@ -11,7 +11,8 @@ pack- and board-driven: adding a new board should be data-only.
 - `boards/` contains board JSON definitions (for example
   `boards/nucleo_l552ze_q.json`).
 - `packs/` contains family packs (for example `packs/stm32l5/`) with templates
-  under `templates/` and OpenOCD defaults under `openocd/`.
+  under `templates/` (HAL, pin map, linker/startup, and CMake) and OpenOCD
+  defaults under `openocd/`.
 - `tests/` contains unit tests (currently `tests/test_loaders.py`).
 
 ## Build, Test, and Development Commands

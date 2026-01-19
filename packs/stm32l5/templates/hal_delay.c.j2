@@ -1,0 +1,14 @@
+#include "hal_delay.h"
+
+#define SYST_CSR (*(volatile uint32_t *)0xE000E010U)
+#define SYST_CSR_COUNTFLAG (1U << 16)
+
+void hal_delay_ms(uint32_t ms)
+{
+    for (uint32_t i = 0; i < ms; i++)
+    {
+        while ((SYST_CSR & SYST_CSR_COUNTFLAG) == 0U)
+        {
+        }
+    }
+}

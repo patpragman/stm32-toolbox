@@ -5,13 +5,25 @@
   "cmsis": {
     "strategy": "cube_root"
   },
+  "defaults": {
+    "system_clock_hz": 16000000
+  },
   "templates": {
     "cmakelists": "CMakeLists.txt.j2",
     "linker": "linker.ld.j2",
     "system": "system.c.j2",
     "main": "main_blinky.c.j2",
     "family_gpio": "family_gpio.j2",
-    "startup": "startup_gcc.s"
+    "startup": "startup_gcc.s",
+    "hal_h": "hal.h.j2",
+    "hal_gpio_h": "hal_gpio.h.j2",
+    "hal_gpio_c": "hal_gpio.c.j2",
+    "hal_clock_h": "hal_clock.h.j2",
+    "hal_clock_c": "hal_clock.c.j2",
+    "hal_delay_h": "hal_delay.h.j2",
+    "hal_delay_c": "hal_delay.c.j2",
+    "app_pins_h": "app_pins.h.j2",
+    "app_pins_c": "app_pins.c.j2"
   },
   "openocd": {
     "target_cfg": "openocd/target.cfg",

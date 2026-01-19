@@ -1,0 +1,79 @@
+#include "app_pins.h"
+#include "hal_gpio.h"
+
+typedef struct
+{
+    hal_port_t port;
+    uint8_t pin;
+    hal_gpio_mode_t mode;
+    hal_gpio_pull_t pull;
+    bool active_high;
+    bool initial_high;
+} app_pin_def_t;
+
+static const app_pin_def_t k_pins[] = {
+{% for pin in pins %}
+    {
+        {{ pin.port_enum }},
+        {{ pin.pin }}U,
+        {{ pin.mode_enum }},
+        {{ pin.pull_enum }},
+        {{ "true" if pin.active_high else "false" }},
+        {{ "true" if pin.initial_high else "false" }}
+    },
+{% endfor %}
+};
+
+void app_pins_init(void)
+{
+    for (uint32_t i = 0; i < APP_PIN_COUNT; i++)
+    {
+        const app_pin_def_t *pin = &k_pins[i];
+        bool initial_high = pin->initial_high;
+        if (!pin->active_high)
+        {
+            initial_high = !initial_high;
+        }
+        hal_gpio_init(pin->port, pin->pin, pin->mode, pin->pull, initial_high);
+    }
+}
+
+void app_pin_write(app_pin_id_t id, bool high)
+{
+    if ((uint32_t)id >= APP_PIN_COUNT)
+    {
+        return;
+    }
+    const app_pin_def_t *pin = &k_pins[id];
+    bool level = high;
+    if (!pin->active_high)
+    {
+        level = !level;
+    }
+    hal_gpio_write(pin->port, pin->pin, level);
+}
+
+void app_pin_toggle(app_pin_id_t id)
+{
+    if ((uint32_t)id >= APP_PIN_COUNT)
+    {
+        return;
+    }
+    const app_pin_def_t *pin = &k_pins[id];
+    hal_gpio_toggle(pin->port, pin->pin);
+}
+
+bool app_pin_read(app_pin_id_t id)
+{
+    if ((uint32_t)id >= APP_PIN_COUNT)
+    {
+        return false;
+    }
+    const app_pin_def_t *pin = &k_pins[id];
+    bool level = hal_gpio_read(pin->port, pin->pin);
+    if (!pin->active_high)
+    {
+        level = !level;
+    }
+    return level;
+}

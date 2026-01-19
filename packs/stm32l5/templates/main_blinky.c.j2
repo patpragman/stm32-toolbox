@@ -1,21 +1,14 @@
-#include <stdint.h>
-#include "family_gpio.h"
-
-static void delay(volatile uint32_t loops)
-{
-    while (loops--)
-    {
-        __asm__ volatile("nop");
-    }
-}
+#include "hal.h"
+#include "app_pins.h"
 
 int main(void)
 {
-    gpio_led_init();
+    hal_clock_init();
+    app_pins_init();
 
     while (1)
     {
-        gpio_led_toggle();
-        delay(800000);
+        app_pin_toggle(APP_PIN_LED);
+        hal_delay_ms(300);
     }
 }

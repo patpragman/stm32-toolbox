@@ -1,0 +1,150 @@
+#include "hal_gpio.h"
+
+#define RCC_BASE 0x40021000U
+#define RCC_AHBENR_OFFSET 0x14U
+#define RCC_AHBENR (*(volatile uint32_t *)(RCC_BASE + RCC_AHBENR_OFFSET))
+
+#define GPIOA_BASE 0x48000000U
+#define GPIOB_BASE 0x48000400U
+#define GPIOC_BASE 0x48000800U
+#define GPIOD_BASE 0x48000C00U
+#define GPIOE_BASE 0x48001000U
+#define GPIOF_BASE 0x48001400U
+
+#define GPIO_MODER_OFFSET 0x00U
+#define GPIO_OTYPER_OFFSET 0x04U
+#define GPIO_PUPDR_OFFSET 0x0CU
+#define GPIO_IDR_OFFSET 0x10U
+#define GPIO_ODR_OFFSET 0x14U
+#define GPIO_BSRR_OFFSET 0x18U
+
+static inline uint32_t gpio_base_addr(hal_port_t port)
+{
+    switch (port)
+    {
+    case HAL_PORT_A:
+        return GPIOA_BASE;
+    case HAL_PORT_B:
+        return GPIOB_BASE;
+    case HAL_PORT_C:
+        return GPIOC_BASE;
+    case HAL_PORT_D:
+        return GPIOD_BASE;
+    case HAL_PORT_E:
+        return GPIOE_BASE;
+    case HAL_PORT_F:
+        return GPIOF_BASE;
+    default:
+        return GPIOA_BASE;
+    }
+}
+
+static inline uint32_t gpio_enable_bit(hal_port_t port)
+{
+    switch (port)
+    {
+    case HAL_PORT_A:
+        return 17U;
+    case HAL_PORT_B:
+        return 18U;
+    case HAL_PORT_C:
+        return 19U;
+    case HAL_PORT_D:
+        return 20U;
+    case HAL_PORT_E:
+        return 21U;
+    case HAL_PORT_F:
+        return 22U;
+    default:
+        return 17U;
+    }
+}
+
+static inline void gpio_enable_clock(hal_port_t port)
+{
+    RCC_AHBENR |= (1U << gpio_enable_bit(port));
+}
+
+static inline volatile uint32_t *reg_ptr(uint32_t base, uint32_t offset)
+{
+    return (volatile uint32_t *)(base + offset);
+}
+
+void hal_gpio_init(
+    hal_port_t port,
+    uint8_t pin,
+    hal_gpio_mode_t mode,
+    hal_gpio_pull_t pull,
+    bool initial_high)
+{
+    uint32_t base = gpio_base_addr(port);
+    gpio_enable_clock(port);
+
+    volatile uint32_t *moder = reg_ptr(base, GPIO_MODER_OFFSET);
+    volatile uint32_t *otyper = reg_ptr(base, GPIO_OTYPER_OFFSET);
+    volatile uint32_t *pupdr = reg_ptr(base, GPIO_PUPDR_OFFSET);
+    volatile uint32_t *bsrr = reg_ptr(base, GPIO_BSRR_OFFSET);
+
+    uint32_t shift = (uint32_t)pin * 2U;
+    uint32_t reg = *moder;
+    reg &= ~(3U << shift);
+    reg |= ((uint32_t)mode << shift);
+    *moder = reg;
+
+    reg = *pupdr;
+    reg &= ~(3U << shift);
+    reg |= ((uint32_t)pull << shift);
+    *pupdr = reg;
+
+    *otyper &= ~(1U << pin);
+
+    if (mode == HAL_GPIO_MODE_OUTPUT)
+    {
+        if (initial_high)
+        {
+            *bsrr = 1U << pin;
+        }
+        else
+        {
+            *bsrr = 1U << (pin + 16U);
+        }
+    }
+}
+
+void hal_gpio_write(hal_port_t port, uint8_t pin, bool high)
+{
+    uint32_t base = gpio_base_addr(port);
+    volatile uint32_t *bsrr = reg_ptr(base, GPIO_BSRR_OFFSET);
+
+    if (high)
+    {
+        *bsrr = 1U << pin;
+    }
+    else
+    {
+        *bsrr = 1U << (pin + 16U);
+    }
+}
+
+bool hal_gpio_read(hal_port_t port, uint8_t pin)
+{
+    uint32_t base = gpio_base_addr(port);
+    volatile uint32_t *idr = reg_ptr(base, GPIO_IDR_OFFSET);
+    return ((*idr >> pin) & 0x1U) != 0U;
+}
+
+void hal_gpio_toggle(hal_port_t port, uint8_t pin)
+{
+    uint32_t base = gpio_base_addr(port);
+    volatile uint32_t *odr = reg_ptr(base, GPIO_ODR_OFFSET);
+    volatile uint32_t *bsrr = reg_ptr(base, GPIO_BSRR_OFFSET);
+
+    if ((*odr >> pin) & 0x1U)
+    {
+        *bsrr = 1U << (pin + 16U);
+    }
+    else
+    {
+        *bsrr = 1U << pin;
+    }
+}

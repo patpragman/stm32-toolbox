@@ -1,0 +1,42 @@
+#ifndef HAL_GPIO_H
+#define HAL_GPIO_H
+
+#include <stdbool.h>
+#include <stdint.h>
+
+typedef enum
+{
+    HAL_PORT_A = 0,
+    HAL_PORT_B = 1,
+    HAL_PORT_C = 2,
+    HAL_PORT_D = 3,
+    HAL_PORT_E = 4,
+    HAL_PORT_F = 5,
+    HAL_PORT_G = 6,
+    HAL_PORT_H = 7
+} hal_port_t;
+
+typedef enum
+{
+    HAL_GPIO_MODE_INPUT = 0,
+    HAL_GPIO_MODE_OUTPUT = 1
+} hal_gpio_mode_t;
+
+typedef enum
+{
+    HAL_GPIO_PULL_NONE = 0,
+    HAL_GPIO_PULL_UP = 1,
+    HAL_GPIO_PULL_DOWN = 2
+} hal_gpio_pull_t;
+
+void hal_gpio_init(
+    hal_port_t port,
+    uint8_t pin,
+    hal_gpio_mode_t mode,
+    hal_gpio_pull_t pull,
+    bool initial_high);
+void hal_gpio_write(hal_port_t port, uint8_t pin, bool high);
+bool hal_gpio_read(hal_port_t port, uint8_t pin);
+void hal_gpio_toggle(hal_port_t port, uint8_t pin);
+
+#endif

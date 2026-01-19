@@ -24,6 +24,15 @@ class GeneratorTests(unittest.TestCase):
             self.assertTrue((output_dir / "system.c").exists())
             self.assertTrue((output_dir / "main.c").exists())
             self.assertTrue((output_dir / "family_gpio.h").exists())
+            self.assertTrue((output_dir / "hal.h").exists())
+            self.assertTrue((output_dir / "hal_gpio.c").exists())
+            self.assertTrue((output_dir / "hal_gpio.h").exists())
+            self.assertTrue((output_dir / "hal_clock.c").exists())
+            self.assertTrue((output_dir / "hal_clock.h").exists())
+            self.assertTrue((output_dir / "hal_delay.c").exists())
+            self.assertTrue((output_dir / "hal_delay.h").exists())
+            self.assertTrue((output_dir / "app_pins.c").exists())
+            self.assertTrue((output_dir / "app_pins.h").exists())
             self.assertTrue((output_dir / "stm32toolbox.project.json").exists())
 
             manifest = json.loads((output_dir / "stm32toolbox.project.json").read_text(encoding="utf-8"))
@@ -33,6 +42,9 @@ class GeneratorTests(unittest.TestCase):
             family_gpio = (output_dir / "family_gpio.h").read_text(encoding="utf-8")
             self.assertIn("#define LED_PIN 5U", family_gpio)
             self.assertIn("#define GPIO_BASE 0x48000000U", family_gpio)
+
+            app_pins = (output_dir / "app_pins.h").read_text(encoding="utf-8")
+            self.assertIn("APP_PIN_LED", app_pins)
 
 
 if __name__ == "__main__":

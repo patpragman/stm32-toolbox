@@ -18,6 +18,15 @@ class PackTemplates:
     main: str
     family_gpio: str
     startup: str
+    hal_h: str
+    hal_gpio_h: str
+    hal_gpio_c: str
+    hal_clock_h: str
+    hal_clock_c: str
+    hal_delay_h: str
+    hal_delay_c: str
+    app_pins_h: str
+    app_pins_c: str
 
 
 @dataclass(frozen=True)
@@ -35,6 +44,7 @@ class PackDefinition:
     cmsis_strategy: str
     templates: PackTemplates
     openocd: OpenOCDDefaults
+    system_clock_hz: int
     root: Path
 
 
@@ -66,6 +76,15 @@ class PackLibrary:
                 main=data["templates"]["main"],
                 family_gpio=data["templates"]["family_gpio"],
                 startup=data["templates"]["startup"],
+                hal_h=data["templates"]["hal_h"],
+                hal_gpio_h=data["templates"]["hal_gpio_h"],
+                hal_gpio_c=data["templates"]["hal_gpio_c"],
+                hal_clock_h=data["templates"]["hal_clock_h"],
+                hal_clock_c=data["templates"]["hal_clock_c"],
+                hal_delay_h=data["templates"]["hal_delay_h"],
+                hal_delay_c=data["templates"]["hal_delay_c"],
+                app_pins_h=data["templates"]["app_pins_h"],
+                app_pins_c=data["templates"]["app_pins_c"],
             )
             openocd = OpenOCDDefaults(
                 target_cfg=data["openocd"]["target_cfg"],
@@ -79,6 +98,7 @@ class PackLibrary:
                 cmsis_strategy=data["cmsis"]["strategy"],
                 templates=templates,
                 openocd=openocd,
+                system_clock_hz=int(data.get("defaults", {}).get("system_clock_hz", 0)),
                 root=pack_dir,
             )
             self._packs[pack.id] = pack

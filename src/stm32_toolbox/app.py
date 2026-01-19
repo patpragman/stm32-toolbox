@@ -28,6 +28,7 @@ from .ui.project_wizard import ProjectWizard
 from .ui.log_view import LogView
 from .ui.serial_view import SerialView
 from .ui.tool_status import ToolStatusView
+from .ui.pin_config import PinConfigView
 
 
 class ToolboxApp(tk.Tk):
@@ -58,14 +59,18 @@ class ToolboxApp(tk.Tk):
         right = ttk.Frame(root)
         right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(12, 0))
 
-        self.board_select = BoardSelect(left)
+        self.board_select = BoardSelect(left, on_change=self._on_board_change)
         self.board_select.pack(fill=tk.X, pady=(0, 12))
         self.board_select.set_boards(self.board_lib.list())
+        self._on_board_change()
 
         self.project_wizard = ProjectWizard(left, on_generate=self._generate_project)
         self.project_wizard.pack(fill=tk.X, pady=(0, 12))
         if self.settings.last_project_dir:
             self.project_wizard.set_project_dir(self.settings.last_project_dir)
+
+        self.pin_config = PinConfigView(left)
+        self.pin_config.pack(fill=tk.X, pady=(0, 12))
 
         actions = ttk.LabelFrame(left, text="Actions", padding=8)
         actions.pack(fill=tk.X)
@@ -109,6 +114,13 @@ class ToolboxApp(tk.Tk):
         pack = self.pack_lib.get(board.pack)
         return board, pack
 
+    def _on_board_change(self) -> None:
+        try:
+            board, _pack = self._get_selected_board_pack()
+        except Exception:
+            return
+        self.pin_config.set_board_led(board.led.port, board.led.pin)
+
     def _on_build_system_change(self, _event=None) -> None:
         self.settings.build_system = self._build_system_var.get()
         save_settings(self.settings)
@@ -125,12 +137,13 @@ class ToolboxApp(tk.Tk):
             messagebox.showerror("Missing path", "Select a project directory first.")
             return
         board, pack = self._get_selected_board_pack()
+        pins = self.pin_config.get_pins()
         self._current_project_dir = Path(project_dir)
 
         def work():
             try:
                 generator = ProjectGenerator(self._current_project_dir)
-                generator.generate(board, pack)
+                generator.generate(board, pack, pins=pins)
                 self._log(f"Generated project at {self._current_project_dir}")
                 self.settings.last_project_dir = str(self._current_project_dir)
                 self.settings.last_board_id = board.id

@@ -1,0 +1,20 @@
+#ifndef APP_PINS_H
+#define APP_PINS_H
+
+#include <stdbool.h>
+#include <stdint.h>
+
+typedef enum
+{
+{% for pin in pins %}
+    {{ pin.enum_name }},
+{% endfor %}
+    APP_PIN_COUNT
+} app_pin_id_t;
+
+void app_pins_init(void);
+void app_pin_write(app_pin_id_t id, bool high);
+void app_pin_toggle(app_pin_id_t id);
+bool app_pin_read(app_pin_id_t id);
+
+#endif

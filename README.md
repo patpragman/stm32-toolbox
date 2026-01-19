@@ -41,6 +41,13 @@ cmake --build build
 If you already have a Make-based project, you can select the Make build system
 in the GUI and it will run `make` and `make flash`.
 
+## GPIO + HAL
+
+Generated projects include a lightweight HAL (`hal_*.c/.h`) and an application
+pin map (`app_pins.c/.h`). Use the GPIO Pins panel to add pins; the board LED
+is always available as `APP_PIN_LED`. Timing helpers like `hal_delay_ms(300)`
+use a 1 ms SysTick configuration.
+
 ## Status
 
 This repository contains the initial scaffolding and core modules. Expand packs,
