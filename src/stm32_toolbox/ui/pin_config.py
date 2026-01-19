@@ -131,9 +131,16 @@ class PinConfigView(ttk.LabelFrame):
     def __init__(self, master, on_change=None, **kwargs):
         super().__init__(master, text="GPIO Pins", padding=8, **kwargs)
         self._on_change = on_change
+        self._led_name_var = tk.StringVar(value="LED")
 
         self._led_label = ttk.Label(self, text="Board LED: -")
         self._led_label.pack(anchor=tk.W)
+        led_row = ttk.Frame(self)
+        led_row.pack(fill=tk.X, pady=(2, 6))
+        ttk.Label(led_row, text="LED Name").pack(side=tk.LEFT)
+        ttk.Entry(led_row, textvariable=self._led_name_var, width=16).pack(
+            side=tk.LEFT, padx=6
+        )
 
         self._tree = ttk.Treeview(
             self,
@@ -162,6 +169,9 @@ class PinConfigView(ttk.LabelFrame):
 
     def set_board_led(self, port: str, pin: int) -> None:
         self._led_label.configure(text=f"Board LED: {port}{pin}")
+
+    def get_led_alias(self) -> str:
+        return self._led_name_var.get().strip()
 
     def _add_pin(self) -> None:
         dialog = PinDialog(self)

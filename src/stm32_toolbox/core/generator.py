@@ -39,6 +39,7 @@ class ProjectGenerator:
         board: BoardDefinition,
         pack: PackDefinition,
         pins: list[dict] | None = None,
+        led_alias: str | None = None,
     ) -> Path:
         try:
             ensure_dir(self.output_dir)
@@ -48,7 +49,7 @@ class ProjectGenerator:
         except OSError as exc:
             raise GenerationError(f"Unable to create output directories: {exc}") from exc
 
-        normalized_pins = self._normalize_pins(board, pins or [])
+        normalized_pins = self._normalize_pins(board, pins or [], led_alias)
         context = self._build_context(board, pack, normalized_pins)
         templates_dir = pack.root / "templates"
         env = jinja_env(templates_dir)
@@ -114,6 +115,7 @@ class ProjectGenerator:
         pack: PackDefinition,
         pins: list[dict],
     ) -> dict:
+        led_enum_name = pins[0]["enum_name"] if pins else "APP_PIN_LED"
         return {
             "board": asdict(board),
             "pack": asdict(pack),
@@ -125,13 +127,19 @@ class ProjectGenerator:
             "led_pin": board.led.pin,
             "led_active_high": board.led.active_high,
             "system_clock_hz": pack.system_clock_hz,
+            "led_enum_name": led_enum_name,
             "pins": pins,
         }
 
     @staticmethod
-    def _normalize_pins(board: BoardDefinition, pins: list[dict]) -> list[dict]:
+    def _normalize_pins(
+        board: BoardDefinition,
+        pins: list[dict],
+        led_alias: str | None,
+    ) -> list[dict]:
         normalized = []
         names = set()
+        locations = set()
 
         def add_pin(entry: dict) -> None:
             name = entry.get("name", "").strip()
@@ -165,6 +173,11 @@ class ProjectGenerator:
 
             active_high = bool(entry.get("active_high", True))
 
+            location = (port, pin)
+            if location in locations:
+                raise GenerationError(f"Duplicate GPIO pin: P{port}{pin}")
+            locations.add(location)
+
             normalized.append(
                 {
                     "name": name,
@@ -188,9 +201,13 @@ class ProjectGenerator:
                 }
             )
 
+        alias = (led_alias or "LED").strip()
+        if not alias:
+            alias = "LED"
+
         add_pin(
             {
-                "name": "led",
+                "name": alias,
                 "port": board.led.port,
                 "pin": board.led.pin,
                 "mode": "output",

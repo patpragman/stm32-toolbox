@@ -1,6 +1,19 @@
 #include "hal.h"
 #include "app_pins.h"
 
+/*
+ * stm32-toolbox HAL quickstart:
+ * - hal_clock_init(): sets the default system clock and 1 ms SysTick.
+ * - hal_delay_ms(ms) or delay(ms): millisecond delays.
+ * - app_pins_init(): configures pins from the GUI.
+ * - app_pin_write/toggle/read(): drive mapped pins.
+ *
+ * Pin map:
+{% for pin in pins %}
+ *   {{ pin.enum_name }} -> P{{ pin.port }}{{ pin.pin }} ({{ pin.mode }})
+{% endfor %}
+ */
+
 int main(void)
 {
     hal_clock_init();
@@ -8,7 +21,7 @@ int main(void)
 
     while (1)
     {
-        app_pin_toggle(APP_PIN_LED);
+        app_pin_toggle({{ led_enum_name }});
         hal_delay_ms(300);
     }
 }

@@ -138,12 +138,13 @@ class ToolboxApp(tk.Tk):
             return
         board, pack = self._get_selected_board_pack()
         pins = self.pin_config.get_pins()
+        led_alias = self.pin_config.get_led_alias()
         self._current_project_dir = Path(project_dir)
 
         def work():
             try:
                 generator = ProjectGenerator(self._current_project_dir)
-                generator.generate(board, pack, pins=pins)
+                generator.generate(board, pack, pins=pins, led_alias=led_alias)
                 self._log(f"Generated project at {self._current_project_dir}")
                 self.settings.last_project_dir = str(self._current_project_dir)
                 self.settings.last_board_id = board.id

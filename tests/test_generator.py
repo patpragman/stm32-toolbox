@@ -46,6 +46,34 @@ class GeneratorTests(unittest.TestCase):
             app_pins = (output_dir / "app_pins.h").read_text(encoding="utf-8")
             self.assertIn("APP_PIN_LED", app_pins)
 
+    def test_generate_project_with_custom_pins(self) -> None:
+        board = BoardLibrary(Path("boards")).get("nucleo_f091rc")
+        pack = PackLibrary(Path("packs")).get("stm32f0")
+
+        pins = [
+            {
+                "name": "BTN1",
+                "port": "C",
+                "pin": 13,
+                "mode": "input",
+                "pull": "up",
+                "initial": "low",
+                "active_high": True,
+            }
+        ]
+
+        with TemporaryDirectory() as tmp:
+            output_dir = Path(tmp) / "proj"
+            generator = ProjectGenerator(output_dir)
+            generator.generate(board, pack, pins=pins, led_alias="LD2")
+
+            app_pins = (output_dir / "app_pins.h").read_text(encoding="utf-8")
+            self.assertIn("APP_PIN_LD2", app_pins)
+            self.assertIn("APP_PIN_BTN1", app_pins)
+
+            main_c = (output_dir / "main.c").read_text(encoding="utf-8")
+            self.assertIn("APP_PIN_LD2", main_c)
+
 
 if __name__ == "__main__":
     unittest.main()

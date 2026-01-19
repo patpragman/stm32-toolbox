@@ -4,6 +4,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/* Pin map generated from the GPIO Pins panel. */
+/*
+{% for pin in pins %}
+ * {{ pin.enum_name }} -> P{{ pin.port }}{{ pin.pin }} ({{ pin.mode }}, {{ pin.pull }})
+{% endfor %}
+ */
+
 typedef enum
 {
 {% for pin in pins %}
