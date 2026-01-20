@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+/* Millisecond delay; requires hal_clock_init() to configure SysTick. */
 void hal_delay_ms(uint32_t ms);
 
 static inline void delay(uint32_t ms)
