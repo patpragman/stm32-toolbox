@@ -237,6 +237,11 @@ class PinConfigView(ttk.LabelFrame):
     def get_led_alias(self) -> str:
         return self._led_name_var.get().strip()
 
+    def set_led_alias(self, name: str) -> None:
+        alias = name.strip()
+        if alias:
+            self._led_name_var.set(alias)
+
     def _add_pin(self) -> None:
         dialog = PinDialog(self, ports=self._ports)
         if not dialog.result:
@@ -328,6 +333,28 @@ class PinConfigView(ttk.LabelFrame):
                 }
             )
         return pins
+
+    def set_pins(self, pins: list[dict]) -> None:
+        for item in self._tree.get_children():
+            self._tree.delete(item)
+        for entry in pins:
+            try:
+                port = str(entry.get("port", "")).upper()
+                pin = int(entry.get("pin", 0))
+            except (TypeError, ValueError):
+                continue
+            self._insert_pin(
+                {
+                    "name": str(entry.get("name", "")).strip() or f"P{port}{pin}",
+                    "port": port,
+                    "pin": pin,
+                    "mode": entry.get("mode", "input"),
+                    "pull": entry.get("pull", "none"),
+                    "initial": entry.get("initial", "low"),
+                    "active_high": bool(entry.get("active_high", True)),
+                }
+            )
+        self._notify_change()
 
     def set_ports(self, ports: list[str]) -> None:
         self._ports = [str(port).upper() for port in ports]

@@ -9,10 +9,11 @@ from .widgets import LabeledEntry
 
 
 class ProjectWizard(ttk.Frame):
-    def __init__(self, master, on_generate=None, **kwargs):
+    def __init__(self, master, on_generate=None, on_select=None, **kwargs):
         super().__init__(master, **kwargs)
         ttk.Label(self, text="Project").pack(anchor=tk.W)
         self._path_var = tk.StringVar()
+        self._on_select = on_select
         row = ttk.Frame(self)
         row.pack(fill=tk.X, expand=True)
         LabeledEntry(row, "Directory", textvariable=self._path_var).pack(
@@ -28,6 +29,8 @@ class ProjectWizard(ttk.Frame):
         path = filedialog.askdirectory(mustexist=False)
         if path:
             self._path_var.set(path)
+            if self._on_select:
+                self._on_select(path)
 
     def get_project_dir(self) -> str:
         return self._path_var.get().strip()

@@ -23,6 +23,7 @@ from .core.flasher import Flasher, FlashConfig, MakeFlasher, MakeFlashConfig
 from .core.discover import list_serial_ports, prefer_stlink
 from .core.serialmon import SerialMonitor, SerialConfig
 from .core.errors import normalize_error
+from .core.util import read_json
 from .ui.board_select import BoardSelect
 from .ui.project_wizard import ProjectWizard
 from .ui.log_view import LogView
@@ -67,7 +68,11 @@ class ToolboxApp(tk.Tk):
         if self.settings.last_board_id:
             self.board_select.select_id(self.settings.last_board_id)
 
-        self.project_wizard = ProjectWizard(left, on_generate=self._generate_project)
+        self.project_wizard = ProjectWizard(
+            left,
+            on_generate=self._generate_project,
+            on_select=self._on_project_selected,
+        )
         self.project_wizard.pack(fill=tk.X, pady=(0, 12))
         if self.settings.last_project_dir:
             self.project_wizard.set_project_dir(self.settings.last_project_dir)
@@ -195,6 +200,56 @@ class ToolboxApp(tk.Tk):
                 self._log(f"Action: {detail.action}")
 
         threading.Thread(target=work, daemon=True).start()
+
+    def _on_project_selected(self, path: str) -> None:
+        if not path:
+            return
+        project_dir = Path(path)
+        self._current_project_dir = project_dir
+        if str(project_dir) != self.settings.last_project_dir:
+            self.settings.last_project_dir = str(project_dir)
+            save_settings(self.settings)
+
+        manifest_path = project_dir / "stm32toolbox.project.json"
+        manifest = None
+        if manifest_path.exists():
+            try:
+                manifest = read_json(manifest_path)
+            except Exception as exc:
+                detail = normalize_error(exc)
+                self._log(f"Error: {detail.summary}")
+                self._log(f"Action: {detail.action}")
+
+        if manifest:
+            board_id = str(manifest.get("board", "")).strip()
+            if board_id:
+                if self.board_select.select_id(board_id):
+                    self._on_board_change()
+                else:
+                    self._log(f"Error: Board not found: {board_id}")
+                    self._log("Action: Select a valid board manually.")
+            pins = manifest.get("pins")
+            pins_ready = True
+            if board_id:
+                pins_ready = self.board_select.get_selected_id() == board_id
+            if isinstance(pins, list) and pins and pins_ready:
+                led_alias = None
+                try:
+                    board = self.board_lib.get(self.board_select.get_selected_id())
+                    for entry in pins:
+                        port = str(entry.get("port", "")).upper()
+                        pin = int(entry.get("pin", -1))
+                        if port == board.led.port and pin == board.led.pin:
+                            led_alias = str(entry.get("name", "")).strip()
+                            break
+                except Exception:
+                    led_alias = None
+                if led_alias:
+                    self.pin_config.set_led_alias(led_alias)
+                self.pin_config.set_pins(pins)
+
+        if not self._load_main_editor() and manifest_path.exists():
+            self._log("Note: No main.c found in the selected project.")
 
     def _build_project(self) -> None:
         if not self._current_project_dir:
