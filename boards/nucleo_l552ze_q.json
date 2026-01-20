@@ -33,6 +33,9 @@
   "openocd": {
     "interface_cfg": "interface/stlink.cfg",
     "transport": "auto",
-    "speed_khz": 4000
+    "speed_khz": 4000,
+    "reset_config": [
+      "reset_config srst_only srst_nogate connect_assert_srst"
+    ]
   }
 }
