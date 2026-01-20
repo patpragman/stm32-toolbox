@@ -5,9 +5,10 @@
 #include <stdint.h>
 
 /* Pin map generated from the GPIO Pins panel. */
+/* Reserved pins are listed but not initialized in app_pins_init(). */
 /*
 {% for pin in pins %}
- * {{ pin.enum_name }} -> P{{ pin.port }}{{ pin.pin }} ({{ pin.mode }}, {{ pin.pull }})
+ * {{ pin.enum_name }} -> P{{ pin.port }}{{ pin.pin }} ({{ pin.mode }}, {{ pin.pull }}{% if pin.reserved %}, reserved{% if pin.reserved_reason %}: {{ pin.reserved_reason }}{% endif %}{% endif %})
 {% endfor %}
  */
 

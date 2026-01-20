@@ -9,6 +9,7 @@ typedef struct
     hal_gpio_pull_t pull;
     bool active_high;
     bool initial_high;
+    bool skip_init;
 } app_pin_def_t;
 
 static const app_pin_def_t k_pins[] = {
@@ -19,7 +20,8 @@ static const app_pin_def_t k_pins[] = {
         {{ pin.mode_enum }},
         {{ pin.pull_enum }},
         {{ "true" if pin.active_high else "false" }},
-        {{ "true" if pin.initial_high else "false" }}
+        {{ "true" if pin.initial_high else "false" }},
+        {{ "true" if pin.skip_init else "false" }}
     },
 {% endfor %}
 };
@@ -29,6 +31,10 @@ void app_pins_init(void)
     for (uint32_t i = 0; i < APP_PIN_COUNT; i++)
     {
         const app_pin_def_t *pin = &k_pins[i];
+        if (pin->skip_init)
+        {
+            continue;
+        }
         bool initial_high = pin->initial_high;
         if (!pin->active_high)
         {

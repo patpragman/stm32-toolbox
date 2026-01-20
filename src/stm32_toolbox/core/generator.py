@@ -112,6 +112,8 @@ class ProjectGenerator:
                     "pull": pin["pull"],
                     "initial": pin["initial"],
                     "active_high": pin["active_high"],
+                    "reserved": pin.get("reserved", False),
+                    "reserved_reason": pin.get("reserved_reason", ""),
                 }
                 for pin in normalized_pins
             ],
@@ -200,6 +202,9 @@ class ProjectGenerator:
         locations = set()
         led_location = (board.led.port, board.led.pin)
         led_alias = (led_alias or board.led.name or "LED").strip() or "LED"
+        reserved_lookup = {
+            (pin.port.upper(), pin.pin): pin.reason for pin in board.reserved_pins or []
+        }
 
         def add_pin(entry: dict) -> int:
             name = entry.get("name", "").strip()
@@ -229,6 +234,8 @@ class ProjectGenerator:
                 raise GenerationError(f"Invalid GPIO initial: {initial}")
 
             active_high = bool(entry.get("active_high", True))
+            reserved = bool(entry.get("reserved", False)) or (port, pin) in reserved_lookup
+            reserved_reason = reserved_lookup.get((port, pin), "")
 
             location = (port, pin)
             if location in locations:
@@ -269,6 +276,9 @@ class ProjectGenerator:
                 }[pull],
                 "initial_high": False if is_led else initial == "high",
                 "is_led": is_led,
+                "reserved": reserved,
+                "reserved_reason": reserved_reason,
+                "skip_init": reserved and not is_led,
             }
             normalized.append(entry)
             name_to_index[enum_name] = len(normalized) - 1

@@ -25,6 +25,13 @@ class LedDefinition:
 
 
 @dataclass(frozen=True)
+class ReservedPinDefinition:
+    port: str
+    pin: int
+    reason: str = ""
+
+
+@dataclass(frozen=True)
 class SerialPinDefinition:
     port: str
     pin: int
@@ -57,6 +64,7 @@ class BoardDefinition:
     ram: MemoryRegion
     led: LedDefinition
     serial: SerialDefinition | None
+    reserved_pins: list[ReservedPinDefinition]
     openocd: OpenOCDBoardConfig
     gpio_ports: list[str] | None
     root: Path
@@ -92,6 +100,15 @@ class BoardLibrary:
                 pin=int(data["led"]["pin"]),
                 active_high=bool(data["led"].get("active_high", True)),
             )
+            reserved_pins = []
+            for entry in data.get("reserved_pins", []):
+                reserved_pins.append(
+                    ReservedPinDefinition(
+                        port=str(entry["port"]).upper(),
+                        pin=int(entry["pin"]),
+                        reason=str(entry.get("reason", "")),
+                    )
+                )
             serial = None
             if data.get("serial"):
                 serial_data = data["serial"]
@@ -128,6 +145,7 @@ class BoardLibrary:
                 ram=ram,
                 led=led,
                 serial=serial,
+                reserved_pins=reserved_pins,
                 openocd=openocd,
                 gpio_ports=gpio_ports,
                 root=board_path.parent,

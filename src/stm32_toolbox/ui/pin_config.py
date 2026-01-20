@@ -148,6 +148,7 @@ class PinConfigView(ttk.LabelFrame):
         self._led_pin: int | None = None
         self._led_active_high: bool = True
         self._ports: list[str] = []
+        self._reserved: dict[tuple[str, int], str] = {}
 
         self._led_label = ttk.Label(self, text="Board LED: -")
         self._led_label.pack(anchor=tk.W)
@@ -157,6 +158,8 @@ class PinConfigView(ttk.LabelFrame):
         ttk.Entry(led_row, textvariable=self._led_name_var, width=16).pack(
             side=tk.LEFT, padx=6
         )
+        self._reserved_label = ttk.Label(self, text="Reserved pins: -")
+        self._reserved_label.pack(anchor=tk.W, pady=(0, 4))
 
         self._tree = ttk.Treeview(
             self,
@@ -193,6 +196,43 @@ class PinConfigView(ttk.LabelFrame):
         self._led_port = port
         self._led_pin = pin
         self._led_active_high = active_high
+
+    def set_reserved_pins(self, reserved: list) -> None:
+        self._reserved = {}
+        for entry in reserved or []:
+            if isinstance(entry, dict):
+                port = entry.get("port")
+                pin = entry.get("pin")
+                reason = entry.get("reason", "")
+            else:
+                port = getattr(entry, "port", None)
+                pin = getattr(entry, "pin", None)
+                reason = getattr(entry, "reason", "")
+            port = str(port).upper() if port is not None else ""
+            if not port:
+                continue
+            try:
+                pin_value = int(pin)
+            except (TypeError, ValueError):
+                continue
+            reason_text = str(reason or "")
+            self._reserved[(port, pin_value)] = reason_text
+
+        if not self._reserved:
+            self._reserved_label.configure(text="Reserved pins: -")
+            return
+
+        def sort_key(item):
+            (port, pin), _reason = item
+            return (port, pin)
+
+        entries = []
+        for (port, pin), reason in sorted(self._reserved.items(), key=sort_key):
+            label = f"P{port}{pin}"
+            if reason:
+                label = f"{label} ({reason})"
+            entries.append(label)
+        self._reserved_label.configure(text="Reserved pins: " + ", ".join(entries))
 
     def get_led_alias(self) -> str:
         return self._led_name_var.get().strip()
@@ -244,6 +284,7 @@ class PinConfigView(ttk.LabelFrame):
             for pin in range(16):
                 name = f"P{port}{pin}"
                 is_led = port == self._led_port and pin == self._led_pin
+                is_reserved = (port, pin) in self._reserved
                 if is_led:
                     name = led_name
                 self._insert_pin(
@@ -255,6 +296,7 @@ class PinConfigView(ttk.LabelFrame):
                         "pull": "none",
                         "initial": "low",
                         "active_high": self._led_active_high if is_led else True,
+                        "reserved": is_reserved,
                     }
                 )
         self._notify_change()
@@ -272,6 +314,7 @@ class PinConfigView(ttk.LabelFrame):
         pins = []
         for item in self._tree.get_children():
             name, port, pin, mode, pull, initial, active = self._tree.item(item, "values")
+            reserved = (str(port).upper(), int(pin)) in self._reserved
             pins.append(
                 {
                     "name": name,
@@ -281,6 +324,7 @@ class PinConfigView(ttk.LabelFrame):
                     "pull": pull,
                     "initial": initial,
                     "active_high": active == "high",
+                    "reserved": reserved,
                 }
             )
         return pins

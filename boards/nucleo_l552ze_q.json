@@ -19,6 +19,10 @@
     "pin": 7,
     "active_high": true
   },
+  "reserved_pins": [
+    { "port": "A", "pin": 13, "reason": "SWDIO" },
+    { "port": "A", "pin": 14, "reason": "SWCLK" }
+  ],
   "gpio_ports": ["A", "B", "C", "D", "E", "F", "G", "H"],
   "serial": {
     "usart": "USART3",
