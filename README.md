@@ -23,6 +23,10 @@ pip install -e .
 stm32-toolbox
 ```
 
+## Tutorial
+
+See `docs/TUTORIAL.md` for a step-by-step workflow from generation to flashing.
+
 ## Pack/board data
 
 - Packs live under `packs/` and describe an MCU family.
