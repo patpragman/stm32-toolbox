@@ -149,6 +149,7 @@ class PinConfigView(ttk.LabelFrame):
         self._led_active_high: bool = True
         self._ports: list[str] = []
         self._reserved: dict[tuple[str, int], str] = {}
+        self._named: dict[tuple[str, int], dict] = {}
 
         self._led_label = ttk.Label(self, text="Board LED: -")
         self._led_label.pack(anchor=tk.W)
@@ -234,6 +235,39 @@ class PinConfigView(ttk.LabelFrame):
             entries.append(label)
         self._reserved_label.configure(text="Reserved pins: " + ", ".join(entries))
 
+    def set_named_pins(self, named_pins: list) -> None:
+        self._named = {}
+        for entry in named_pins or []:
+            port = getattr(entry, "port", None)
+            pin = getattr(entry, "pin", None)
+            name = getattr(entry, "name", None)
+            mode = getattr(entry, "mode", None)
+            pull = getattr(entry, "pull", None)
+            initial = getattr(entry, "initial", None)
+            active_high = getattr(entry, "active_high", None)
+            if isinstance(entry, dict):
+                port = entry.get("port")
+                pin = entry.get("pin")
+                name = entry.get("name")
+                mode = entry.get("mode")
+                pull = entry.get("pull")
+                initial = entry.get("initial")
+                active_high = entry.get("active_high")
+            port = str(port).upper() if port is not None else ""
+            if not port or name is None:
+                continue
+            try:
+                pin_value = int(pin)
+            except (TypeError, ValueError):
+                continue
+            self._named[(port, pin_value)] = {
+                "name": str(name).strip() or f"P{port}{pin_value}",
+                "mode": str(mode or "input").lower(),
+                "pull": str(pull or "none").lower(),
+                "initial": str(initial or "low").lower(),
+                "active_high": bool(True if active_high is None else active_high),
+            }
+
     def get_led_alias(self) -> str:
         return self._led_name_var.get().strip()
 
@@ -290,6 +324,17 @@ class PinConfigView(ttk.LabelFrame):
                 name = f"P{port}{pin}"
                 is_led = port == self._led_port and pin == self._led_pin
                 is_reserved = (port, pin) in self._reserved
+                named = self._named.get((port, pin))
+                mode = "input"
+                pull = "none"
+                initial = "low"
+                active_high = True
+                if named:
+                    name = named.get("name", name)
+                    mode = named.get("mode", mode)
+                    pull = named.get("pull", pull)
+                    initial = named.get("initial", initial)
+                    active_high = named.get("active_high", active_high)
                 if is_led:
                     name = led_name
                 self._insert_pin(
@@ -297,10 +342,10 @@ class PinConfigView(ttk.LabelFrame):
                         "name": name,
                         "port": port,
                         "pin": pin,
-                        "mode": "output" if is_led else "input",
-                        "pull": "none",
-                        "initial": "low",
-                        "active_high": self._led_active_high if is_led else True,
+                        "mode": "output" if is_led else mode,
+                        "pull": "none" if is_led else pull,
+                        "initial": "low" if is_led else initial,
+                        "active_high": self._led_active_high if is_led else active_high,
                         "reserved": is_reserved,
                     }
                 )

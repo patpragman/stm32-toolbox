@@ -23,6 +23,10 @@
     { "port": "A", "pin": 13, "reason": "SWDIO" },
     { "port": "A", "pin": 14, "reason": "SWCLK" }
   ],
+  "named_pins": [
+    { "name": "LD2", "port": "B", "pin": 7, "mode": "output", "initial": "low", "active_high": true },
+    { "name": "B1", "port": "C", "pin": 13, "mode": "input", "pull": "none" }
+  ],
   "gpio_ports": ["A", "B", "C", "D", "E", "F", "G", "H"],
   "serial": {
     "usart": "USART3",

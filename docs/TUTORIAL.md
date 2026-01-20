@@ -52,6 +52,7 @@ Generated projects include `main.c`, `app_pins.*`, `hal_*.c`, `startup_gcc.s`,
 
 The **GPIO Pins** panel defines the C pin map used by `app_pins.c`.
 - The board LED is always present (default alias `LD2`).
+- Board named pins (for example `LD2`, `B1`) are pre-labeled when available.
 - Use **Populate All** to make every GPIO available as `P<port><pin>`.
 - Reserved SWD pins (PA13/PA14) are listed but skipped during init.
 - Use **Add/Edit** to rename pins (e.g., `PA7` → `LD2`).
