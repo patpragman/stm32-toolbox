@@ -24,8 +24,10 @@
     { "port": "A", "pin": 14, "reason": "SWCLK" }
   ],
   "named_pins": [
+    { "name": "LD1", "port": "B", "pin": 0, "mode": "output", "initial": "low", "active_high": true },
     { "name": "LD2", "port": "B", "pin": 7, "mode": "output", "initial": "low", "active_high": true },
-    { "name": "B1", "port": "C", "pin": 13, "mode": "input", "pull": "none" }
+    { "name": "LD3", "port": "B", "pin": 14, "mode": "output", "initial": "low", "active_high": true },
+    { "name": "B1", "port": "C", "pin": 13, "mode": "input", "pull": "none", "active_high": true }
   ],
   "gpio_ports": ["A", "B", "C", "D", "E", "F", "G", "H"],
   "serial": {

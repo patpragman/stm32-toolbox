@@ -137,6 +137,7 @@ class ProjectGenerator:
             if pin.get("is_led"):
                 led_enum_name = pin["enum_name"]
                 break
+        button_enum_name = ProjectGenerator._find_button_enum(pins)
         openocd_speed = board.openocd.speed_khz or pack.openocd.speed_khz
         openocd_transport = board.openocd.transport or pack.openocd.transport
         openocd_transport = ProjectGenerator._normalize_transport(openocd_transport)
@@ -175,6 +176,8 @@ class ProjectGenerator:
             "led_active_high": board.led.active_high,
             "system_clock_hz": pack.system_clock_hz,
             "led_enum_name": led_enum_name,
+            "button_enum_name": button_enum_name or "",
+            "button_present": bool(button_enum_name),
             "pins": pins,
             "project_name": board.id,
             "openocd_interface_cfg": board.openocd.interface_cfg,
@@ -342,3 +345,21 @@ class ProjectGenerator:
             counter += 1
             candidate = f"{base}_{counter}"
         return candidate
+
+    @staticmethod
+    def _find_button_enum(pins: list[dict]) -> str | None:
+        button_names = {
+            "B1",
+            "USER_BUTTON",
+            "USER_BTN",
+            "BUTTON",
+            "BTN",
+            "SW1",
+            "SW",
+        }
+        for pin in pins:
+            name = str(pin.get("name", "")).strip().upper().replace(" ", "_")
+            enum_name = str(pin.get("enum_name", "")).upper().replace("APP_PIN_", "")
+            if name in button_names or enum_name in button_names:
+                return pin.get("enum_name")
+        return None

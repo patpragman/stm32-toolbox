@@ -23,12 +23,24 @@ int main(void)
     hal_uart_init({{ serial_baud }}U);
     hal_uart_write("pins init ok\\r\\n");
 
+    uint32_t slow_ms = 600U;
+    uint32_t fast_ms = 150U;
+    uint32_t delay_ms = slow_ms;
+    bool last_pressed = false;
+
     while (1)
     {
-        app_pin_write({{ led_enum_name }}, true);
-        hal_delay_ms(300);
-        app_pin_write({{ led_enum_name }}, false);
-        hal_delay_ms(300);
+{% if button_present %}
+        bool pressed = app_pin_read({{ button_enum_name }});
+        if (pressed && !last_pressed)
+        {
+            delay_ms = (delay_ms == slow_ms) ? fast_ms : slow_ms;
+            hal_uart_write("button\\r\\n");
+        }
+        last_pressed = pressed;
+{% endif %}
+        app_pin_toggle({{ led_enum_name }});
+        hal_delay_ms(delay_ms);
         hal_uart_write("tick\\r\\n");
     }
 }
